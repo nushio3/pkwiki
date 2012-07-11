@@ -11,3 +11,8 @@ More details on installing and configurating gitit are available
 in the [Gitit User's Guide]().
 
 My first edit
+
+
+~~~ { .haskell }
+let a = 1:a in head a
+~~~
