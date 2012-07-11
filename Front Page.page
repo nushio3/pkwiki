@@ -13,6 +13,11 @@ in the [Gitit User's Guide]().
 My first edit
 
 
+
+
+    #include <stdbool.h>
+    #include <unistd.h>
+
 ~~~ { .haskell }
 let a = 1:a in head a
 ~~~
