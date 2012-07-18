@@ -3,7 +3,7 @@ format: markdown+lhs
 title: Monad-Gaussian
 ...
 
-We have learned that nondeterministic computation is described as List Monad in Haskell. How about continuous probabilistic distributions? Is it possible to describe them as Monads? To make so, we need to add type constraints on the content type of the monad, so we will follow the way Eric have made [made Data.Set a monad](http://www.randomhacks.net/articles/2007/03/15/data-set-monad-haskell-macros).
+We have learned that nondeterministic computation is described as List Monad in Haskell. How about continuous probabilistic distributions? Is it possible to describe them as Monads? To make so, we need to add type constraints on the content type of the monad, so we will follow the way Eric have made [made Data.Set a monad](http://www.randomhacks.net/articles/2007/03/15/data-set-monad-haskell-macros). We need some language extensions for that technique.
 
 > {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses,  NoImplicitPrelude #-}
 > {-# LANGUAGE RebindableSyntax, UndecidableInstances  #-}
