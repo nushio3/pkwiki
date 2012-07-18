@@ -14,7 +14,7 @@ Let's start with some limitation; we restrict ourselves to Gaussian distribution
 
 > data Gaussian a = G {mean :: a, devi :: a} deriving (Eq, Show)
 
-Then, we introduce the monad ''split in half'',
+Then, we introduce the monad _a la split in half_,
 
 > class Monad1 m a where
 >   return :: a -> m a
@@ -24,7 +24,7 @@ Then, we introduce the monad ''split in half'',
 >       Monad2 m a b where
 >   (>>=) :: m a -> (a -> m b) -> m b
 
-and make our `Gaussian` their instances.
+and make our `Gaussian` their instances with constraints on its content type.
 
 > instance (Num a) => Monad1 Gaussian a where
 >   return a = G a 0
