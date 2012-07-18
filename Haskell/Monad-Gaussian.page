@@ -27,9 +27,11 @@ and make our `Gaussian` their instances.
 > instance (Num a) => Monad1 Gaussian a where
 >   return a = G a 0
 
-$(G\ \mu_0\ d_0\ >>=\ f)\frac{\partial f}{\partial \mu_0}$
+If we could write the following analytically;
 
-At the moment, I'll use crude numerical differentiation for probability distribution composition;
+$(G~\mu_0~\sigma_0~~\mathrm{>>=}~~f) = \mathit{let}~(G~\mu_1~d_1=f~\mu_0)~\mathit{in}~G~\mu_1~(\sigma_1+\frac{\partial \mu_1}{\partial \mu_0}\sigma_0)$
+
+The Gaussian would indeed satisfy the three monad laws. At the moment, I'll use crude numerical differentiation for probability distribution composition;
 
 > instance (Monad1 Gaussian a, Monad1 Gaussian b, Fractional a, Num a, Num b) => Monad2 Gaussian a b where
 >   (>>=) (G m0 d0) f =
