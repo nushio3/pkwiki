@@ -5,7 +5,8 @@ title: Monad-Gaussian
 
 We have learned that nondeterministic computation is described as List Monad in Haskell. How about continuous probabilistic distributions? Is it possible to describe them as Monads? To make so, we need to add type constraints on the content type of the monad, so we will follow the way Eric have made [made Data.Set a monad](http://www.randomhacks.net/articles/2007/03/15/data-set-monad-haskell-macros).
 
-> {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses,  NoImplicitPrelude, RebindableSyntax, UndecidableInstances  #-}
+> {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses,  NoImplicitPrelude -#}
+> {-# LANGUAGE RebindableSyntax, UndecidableInstances  #-}
 > import Prelude hiding (return, fail, (>>=), Monad(..))
 
 Let's start with some limitation; we restrict ourselves to Gaussian distributions and assume that the standard deviations are small compared to the scales we deal with.
@@ -33,7 +34,8 @@ $(G~\mu_0~\sigma_0~~\mathrm{>>=}~~f) = \mathit{let}~(G~\mu_1~d_1=f~\mu_0)~\mathi
 
 The Gaussian would indeed satisfy the three monad laws. At the moment, I'll use crude numerical differentiation for approximation;
 
-> instance (Monad1 Gaussian a, Monad1 Gaussian b, Fractional a, Num a, Num b) => Monad2 Gaussian a b where
+> instance (Monad1 Gaussian a, Monad1 Gaussian b, Fractional a, Num a, Num b)
+>   => Monad2 Gaussian a b where
 >   (>>=) (G m0 d0) f =
 >      let (G m1   d1) = f m0
 >          (G m15  _) = f (m0 + 0.5*d0)
@@ -69,5 +71,6 @@ You can even use `do` syntax, thanks to the flexibility provided with
 
 Finally, let's print out the BMI and [be happy with it!](https://www.google.co.jp/search?q=%22You%27re+supposedly+normal.+Pffft+I+bet+you%27re+ugly!%22)
 
+> main :: IO ()
 > main = print $ myBMI
 
