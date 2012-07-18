@@ -2,4 +2,4 @@ tl;dr: buy [Learn you a Haskell for Great Good!](http://www.amazon.co.jp/gp/prod
 
 
 [hackage](Haskell/Hackage) contains a lot of Haskell libraries.
-[control-monad-loop]() is a library that introduces loop syntax in Monad.
+[../Hackage/control-monad-loop]() is a library that introduces loop syntax in Monad.
