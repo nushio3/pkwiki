@@ -3,14 +3,39 @@ format: markdown+lhs
 title: Monad-Gaussian
 ...
 
-We have learned that nondeterministic computation is described as List Monad in Haskell. How about continuous probabilistic distributions? Is it possible to describe them as Monads? Let's try.
- 
-> import Control.Monad
+We have learned that nondeterministic computation is described as List Monad in Haskell. How about continuous probabilistic distributions? Is it possible to describe them as Monads? To make so, we need to add type constraints on the content type of the monad, so we will follow the way Eric have made [made Data.Set a monad](http://www.randomhacks.net/articles/2007/03/15/data-set-monad-haskell-macros).
+
+> {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, NoImplicitPrelude #-}
+> import Prelude hiding (return, fail, (>>=))
 
 Let's start with some limitation; we restrict ourselves to Gaussian distributions and assume that the standard deviations are small compared to the scales we deal with.
 
-> data Gaussian a = G {mean :: a, devi :: a}
+> data Gaussian a = G {mean :: a, devi :: a} deriving (Eq, Show)
 
-> instance Monad Gaussian where
+Then, we introduce the monad ''split in half'',
 
+> class Monad1 m a where
+>   return :: a -> m a
+>   fail :: String -> m a
+>
+> class (Monad1 m a, Monad1 m b) =>
+>       Monad2 m a b where
+>   (>>=) :: m a -> (a -> m b) -> m b
+
+and make our `Gaussian` their instances.
+
+> instance (Num a) => Monad1 Gaussian a where
 >   return a = G a 0
+
+At the moment, I'll use crude numerical differentiation for probability distribution composition; $\frac{\partial f}{\partial x}$
+
+> instance (Monad1 Gaussian a, Monad1 Gaussian b, Fractional a, Num a, Num b) => Monad2 Gaussian a b where
+>   (>>=) (G m0 d0) f =
+>      let (G m1   d1) = f m0
+>          (G m15  _) = f (m0 + 0.5*d0)
+>          (G m05  _) = f (m0 - 0.5*d0)
+>          in G m1 (d1 + abs(m15-m05))
+
+Now we can create some value with Gaussian distributions;
+
+>
