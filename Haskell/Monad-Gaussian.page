@@ -67,7 +67,7 @@ You can even use `do` syntax, thanks to the flexibility provided with
 > -- 1.8813109878778747
 > -- 
 
-Finally, let's print out the BMI and (be happy with it!)[https://www.google.co.jp/search?q=%22You%27re+supposedly+normal.+Pffft+I+bet+you%27re+ugly!%22]
+Finally, let's print out the BMI and [be happy with it!](https://www.google.co.jp/search?q=%22You%27re+supposedly+normal.+Pffft+I+bet+you%27re+ugly!%22)
 
 > main = print $ myBMI
 
