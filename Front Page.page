@@ -30,3 +30,7 @@ let a = 1:a in head a
 
 
 ``a::IO ()``
+
+### Plugin test
+
+@nushio
