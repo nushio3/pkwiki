@@ -1,5 +1,7 @@
 # Welcome to Paraiso Wiki!
 
+# Paraiso Wikiへようこそ!
+
 I am now trying to migrate the Paraiso-wiki to gitit.
 
 Please have a look at
@@ -7,6 +9,14 @@ Please have a look at
 [the blog](http://nushisblogger.blogspot.jp/search/label/ICFDP), or
 [the hackage](http://hackage.haskell.org/package/Paraiso)
 while I'm fixing this.
+
+Wikiたちあげ中です・・・
+[論文](http://iopscience.iop.org/1749-4699/5/1/015003/)とか
+[ブログ](http://d.hatena.ne.jp/nushio/searchdiary?word=*[ICFDP])とか
+[ハケージ](http://hackage.haskell.org/package/Paraiso)とか見といてください。
+ブログの内容はここに統合する予定です。
+
+なお、上の言語切り替えリンクからgititのプラグインにより日英平行でお届けしています。
 
 Help is always available through the "Help" link in the sidebar.
 More details on installing and configurating gitit are available
@@ -17,7 +27,10 @@ Let's Study [Programming Language]()!
 
 What would happen if one creates a [wiki]() page?
 
+## コードを書いてみるテスト
+
 ## Some test
+
 My first edit
 
 
