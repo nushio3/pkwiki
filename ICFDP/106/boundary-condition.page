@@ -20,12 +20,10 @@ Paraisoでは、今のところ周期境界と自由境界という二種類の�
 コード生成時、次元ごとにいづれかの境界条件を選ぶことができます。
 この二種類とほかの命令を組み合わて作れる範囲で、より複雑な境界条件も扱えます。
 境界条件は、
-
-* [`Setup`データ型](http://www.paraiso-lang.org/haddock/Paraiso/Language-Paraiso-Generator-Native.html#t:Setup)
-の`boundary`レコードで、
-* [`Condition`型](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-Annotation-Boundary.html#t:Condition)を要素にもつベクトル
-
-として指定します。
+[`Setup`データ型](http://www.paraiso-lang.org/haddock/Paraiso/Language-Paraiso-Generator-Native.html#t:Setup)
+の`boundary`レコードに対して
+[`Condition`型](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-Annotation-Boundary.html#t:Condition)を要素にもつベクトル
+を与えることで指定します。
 
 Current Paraiso supports two boundary conditions; open boundary and
 cyclic boundary.\
