@@ -1,0 +1,199 @@
+---
+format: markdown+lhs
+title: 
+...
+人生っていいもんだ
+==================
+
+Game of Life
+============
+
+Paraisoを実用的な問題で試してみましょう。
+そうですね、[生命現象のシミュレーション](http://ja.wikipedia.org/wiki/%E3%83%A9%E3%82%A4%E3%83%95%E3%82%B2%E3%83%BC%E3%83%A0)
+などが実用的で良いのではないでしょうか。さっそく
+[サンプルプログラム](https://github.com/nushio3/Paraiso/tree/master/examples/Life)
+を見ていきましょう。まずはインポートです。
+
+Now, let's try Paraiso in a real-world problem. [Simulation of
+artificial life](http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+will be a good starting point.
+
+The [sample
+program](https://github.com/nushio3/Paraiso/tree/master/examples/Life),
+like every other Haskell programs, starts with some language extension
+and imports.
+
+> #!/usr/bin/env runhaskell
+> {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+> {-# OPTIONS -Wall #-}
+> 
+> import           Control.Monad
+> import           Data.Tensor.TypeLevel
+> import           Language.Paraiso.Annotation (Annotation)
+> import qualified Language.Paraiso.Annotation.Boundary as Boundary
+> import           Language.Paraiso.Generator (generateIO)
+> import qualified Language.Paraiso.Generator.Native as Native
+> import           Language.Paraiso.Name
+> import           Language.Paraiso.OM
+> import           Language.Paraiso.OM.Builder
+> import           Language.Paraiso.OM.Builder.Boolean (select,eq,ge,le)
+> import           Language.Paraiso.OM.DynValue as DVal
+> import           Language.Paraiso.OM.Realm 
+> import qualified Language.Paraiso.OM.Reduce as Reduce
+> import           Language.Paraiso.OM.Value (StaticValue(..))
+> import           Language.Paraiso.Optimization
+> import           Language.Paraiso.Prelude
+> import           NumericPrelude hiding ((||),(&&))
+> 
+> -- the main program
+> main :: IO ()
+> main = do
+>   _ <- generateIO mySetup myOM
+>   return ()
+
+80マス×48マスの大きさで、周期境界条件が課された計算領域を用意します。
+OMの名前はずばり"Life"にしましょう。
+
+Let's say our computation region to be 80x48 and with cyclic boundary
+conditions. The new Orthotope Machine will have the name "Life".
+
+> -- the code generation setup
+> mySetup :: Native.Setup Vec2 Int
+> mySetup = 
+>   (Native.defaultSetup $ Vec :~ 80 :~ 48)
+>   { Native.directory = "./dist/" ,
+>     Native.boundary = compose $ const Boundary.Cyclic
+>   }
+> 
+> -- the orthotope machine to be generated
+> myOM :: OM Vec2 Int Annotation
+> myOM = optimize O3 $
+>   makeOM (mkName "Life") [] myVars myKernels
+
+セルオートマトンの状態を表す配列変数`cell`、
+人口を数えるためのスカラー変数`population`、および経過時間を数えるための
+スカラー変数`generation`という三つの変数を用意します。
+
+We use an array variable `cell` for the cell states, `population` for
+counting the number of alive cells and `generation` for keeping track of
+the time.
+
+> -- the variables we use
+> cell :: Named (StaticValue TArray Int)
+> cell = "cell" `isNameOf` StaticValue TArray  undefined
+> 
+> population :: Named (StaticValue TScalar Int)
+> population = "population" `isNameOf` StaticValue TScalar undefined
+> 
+> generation :: Named (StaticValue TScalar Int)
+> generation = "generation" `isNameOf` StaticValue TScalar undefined
+> 
+> myVars :: [Named DynValue]
+> myVars = [f2d cell, f2d population, f2d generation]
+
+Then, let's make two kernels, one for the initialization of the state
+and the other for updating the state for one generation.
+
+カーネルは2つ作ります。1つは初期化のためのカーネルで、もうひとつは
+シミュレーションを1ステップ進めるためのカーネルです。
+
+> -- our kernel
+> myKernels :: [Named (Builder Vec2 Int Annotation ())]
+> myKernels = ["init" `isNameOf` initBuilder,
+>              "proceed" `isNameOf` proceedBuilder]
+
+Initialization, is just trivial.
+
+初期化は、ただのゼロ初期化です。
+
+> initBuilder :: Builder Vec2 Int Annotation ()
+> initBuilder = do 
+>   -- store the initial states.
+>   store cell 0
+>   store population 0
+>   store generation 0
+
+さて、ライフゲームのルールをどのように書けばいいのでしょうか。
+まずは、セルの隣接関係を定義するところから始めましょう。
+Conwayのライフゲームでは、あるセルの縦、横、斜め8セルを隣接していると定義します。
+
+Now, how shall we write the rule of Conway's game of Life? Let's first
+define the adjacency. In Conway's game of Life, one cell has eight
+neighbours:
+
+> adjVecs :: [Vec2 Int]
+> adjVecs = zipWith (\x y -> Vec :~ x :~ y)
+>           [-1, 0, 1,-1, 1,-1, 0, 1]
+>           [-1,-1,-1, 0, 0, 1, 1, 1]
+
+"cell"という名の配列変数から、ステップ開始前のセルの状態を読み取ります。
+
+A timestep of the game begins by loading a Array variable called "cell"
+as the old state of the simulation.
+
+> proceedBuilder :: Builder Vec2 Int Annotation ()
+> proceedBuilder = do 
+>   oldCell <- bind $ load cell
+
+それから、"generation"という名のスカラー変数も必要なので読み込んでおきましょう。
+
+We also load a Scalar variable called "generation."
+
+>   gen  <- bind $ load generation
+
+`shiftedCell <- bind $ shift v oldCell`とすると、もとのセル配列をベクトル`v`だけ
+ずらした配列が手に入りますよね。これを`adjVecs`に入っているすべての`v`について
+繰り返すことで、すべての隣接セルの情報を集められます。
+
+`shiftedCell <- bind $ shift v oldCell` is an expression that yields a
+cell pattern shifted by amount `v` from the old cell. Then mapping it
+over every `v` in `adjVecs` creates the neighbour list.
+
+>   neighbours <- forM adjVecs $
+>     \v -> bind $ shift v oldCell
+
+生きている隣接セルの数を数えましょう。
+
+Count the neighbour cells that are alive.
+
+>   num <- bind $ sum neighbours
+
+「生きているセルは、隣人が2人か3人だったら生き延びる。
+死んだセルは、隣人が3人だったら生き返る」という
+ライフゲームのルールを適用します。
+
+Apply the rule of Conway's game of Life.
+
+>   isAlive <- bind $
+>              (oldCell `eq` 0) && (num `eq` 3) ||
+>              (oldCell `eq` 1) && (num `ge` 2) && (num `le` 3) 
+
+ルールの判定にもとづき、セルの状態を更新します。 `select isAlive 1 0`
+という式は、C言語に訳すと `isAlive ? 1 : 0` のことです。
+
+Update the cell according to the rule. The expression
+`select isAlive 1 0`, means `isAlive ? 1 : 0` in C.
+
+>   newCell <- bind $ select isAlive 1 0
+
+最後に、次のステップの状態を保存します。
+
+Count the number of alive cells, increment the generation, and store the
+new cell state.
+
+>   store population $ reduce Reduce.Sum newCell
+>   store generation $ gen + 1
+>   store cell $ newCell
+
+いかがでしたでしょうか。
+背景のモナディックな枠組みをほとんど意識せずに式が書けている所もあれば、
+舞台装置な処理を意識させてしまっている箇所もあると思います。かつては
+[モナドを使ったDSLとかめどい](http://dl.acm.org/citation.cfm?id=756689)
+という意見もありましたが、
+Haskellのモナドを扱う能力はずいぶん進歩しています。
+私も[すごいHaskell本](http://t.co/DqcNjwLv)の訳を手がけたおかげで、だんだん
+書き方が分かってきました。
+いろんなライブラリがモナドの言葉でかかれているので、
+皆さんがそんなライブラリを作ったり使ったりするとき、
+[すごいHaskell本](http://t.co/DqcNjwLv)もお役に立てれば幸いです。
+
