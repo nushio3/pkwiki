@@ -129,7 +129,7 @@ instead of everywhere else later on.
 OM instructions
 ---------------
 
-直胞機械の命令
+直胞機械の命令セット
 --------------
 
 直胞機械の(実際コンパクトな)命令セットは`Language.Paraiso.OM.Graph`モジュールの
