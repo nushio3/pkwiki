@@ -1,0 +1,63 @@
+---
+format: markdown+lhs
+title: 
+...
+Getting Started with Simulations
+================================
+
+Paraisoでシミュレーションを始める
+=================================
+
+To start numerical simulations, we first need the ability to set the
+initial condition. It will also be a good excercise for Paraiso building
+blocks, so let's give it a try. Please look at [the
+example](https://github.com/nushio3/Paraiso/blob/master/examples/InitialCondition/).
+
+シミュレーションを始めるには、まず初期条件を設定できる必要があります。
+初期条件の場を計算する仕事は、Paraiso式づくりのとっかかりとしても優れています。やってみましょう。
+[サンプル](https://github.com/nushio3/Paraiso/blob/master/examples/InitialCondition/)を見てください。
+
+> table :: Named (StaticValue TArray Double)
+> table = "table" `isNameOf` StaticValue TArray undefined
+> 
+> createBuilder :: Builder Vec2 Int Annotation ()
+> createBuilder = do
+>   x01 <- bind $ (cast $ loadIndex (Axis 0)) 
+>               / (cast $ broadcast $ loadSize (Axis 0))
+>   y01 <- bind $ (cast $ loadIndex (Axis 1)) 
+>               / (cast $ broadcast $ loadSize (Axis 1))
+>   x <- bind $ 4 * (x01-0.5)
+>   y <- bind $ 5 * (y01-0.5)
+>   z <- bind $ atan((1- x^2 - (y-(x^2)**(1/3))^2)*10)
+>   store table z
+
+The `Generator.hs` makes a bit tedious use of `cast`s and `broadcast`s
+we have just learned, to calculate *x* and *y* coordinates in real
+number inbetween 0 and 1 (they are namely `x01` and `y01`.) See how
+input and output types for `cast`s and `broadcast`s are inferred. The
+index and size are of type `Int` (as specified in the type annotation
+for `createBuilder`) while `x01`, `y01`, `x`, `y` and `z` are all of
+type (Builder of) `Double` because `table` has that type and we cannot
+convert type without an explicit `cast`. The careful reader also might
+have noticed that `1/3` is treated as `Double` instead of just being
+truncated to `0`.
+
+`Generator.hs`では、少々煩雑ですが、`cast` と `broadcast`
+を使って配列変数の添字とサイズから、
+x座標とy座標を0から1までの範囲の実数として求めています。 `cast` や
+`broadcast` の引数や返値は、うまいこと型推論してもらえてるみたいですね。
+実際、配列変数の添字とサイズは `createBuilder`
+の型注釈からして`Int`型なのに対し、
+`table`は`Double`型で、そこから明示的な`cast`を挟まずに繋がっている
+`x01`, `y01`, `x`, `y`,`z`などの型もみな`Double`(のBuilder)になります。
+経験のある読者は、`1/3`が一見整数どうしの除算として`0`に切り捨てられることなく、ちゃんと`Double`同士の除算
+として扱われていることにも気づいたかもしれません。
+
+Now, Paraiso and the author give hearts to the readers! Thank you!
+
+それでは、これがParaisoと筆者から読者への気持ちです！
+
+![A heart mark drawn by Paraiso and
+Gnuplot](https://lh5.googleusercontent.com/-EPF_1MWYCTM/T9qBUoRcPFI/AAAAAAAAANs/0kctmWv3e8g/s640/heart.png)
+
+![ParaisoとGnuplotで描いた❤](https://lh5.googleusercontent.com/-EPF_1MWYCTM/T9qBUoRcPFI/AAAAAAAAANs/0kctmWv3e8g/s640/heart.png)
