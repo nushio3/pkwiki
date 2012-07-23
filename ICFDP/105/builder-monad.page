@@ -1,0 +1,269 @@
+---
+format: markdown+lhs
+title: 
+...
+Builderモナド
+=============
+
+Builder Monad
+=============
+
+直胞機械のデータフロー・グラフの型は、`vector`、`gauge`、`anot`という3つの型引数を取るもので、
+これがBuilderにも常についてまわります。
+`vector`は配列の次元(例:3次元)、`gauge`は添字の型(例:Int)、`anot`は解析や最適化に使う注釈の型でして、
+`vector gauge`という組み合わせは配列にアクセスするための添字のベクトル(Intの3次元ベクトル)になります。
+
+The data-flow graph of OM takes three type parameters `vector`,`gauge`
+and `anot`, so does the Builder Monads. `vector` represents the
+dimension of the array (say, three-dimension,) `gauge` the type of the
+index of the array (say, Int,) and `anot` the annotations given to the
+graph for analysis and optimization purposes. The combination
+`vector gauge` represents an index vector (in this case,
+three-dimensional vector of Int) for accessing the arrays.
+
+> type Graph vector gauge anot = Gr (Node vector gauge anot) Edge
+
+Paraisoのプログラムは、`Builder`モナドを組み合わせることで記述します。
+[`Builder`モナド](hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-OM-Builder.html#t:Builder)
+は、実のところ作りかけのデータフローグラフを状態にもつ`State`モナドです。
+それぞれの`Builder`モナドは、データフローグラフの頂点をいくつか引数に取って、新たな頂点を返します。
+
+Paraiso programs are described by combining
+[`Builder Monad`](hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-OM-Builder.html#t:Builder)
+s, which are actually `State` monads each carrying a half-built
+data-flow graph. Builder Monads take a few vertices from the data-flow
+graph, and return (usually one) new vertex. The vertices are of type
+[`Value`](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-OM-Value.html#t:Value),
+which carry their `Realm` information --- whether they are `Array` or
+`Scalar` --- and their content type information.
+
+> -- | value type, with its realm and content type discriminated in 
+> --   type level data
+>   Value rea con = 
+>   -- | data obtained from the data-flow graph.
+>   -- 'realm' carries a type-level realm information, 
+>   -- 'content' carries only type information and its ingredient is 
+>   -- insignificant and can be 'undefined'.
+>   FromNode {realm :: rea, content :: con, node :: G.Node} | 
+>   -- | data obtained as an immediate value.
+>   -- 'realm' carries a type-level realm information, 
+>   -- 'content' is the immediate value to be stored.
+>   FromImm {realm :: rea, content :: con} deriving (Eq, Show)
+
+この頂点は
+[`Value`型](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-OM-Value.html#t:Value)
+であり、各頂点にたいして領域情報`rea`と、中身の型の情報`con`を運んでいます。
+`rea`の位置に入るのは
+[Language.Paraiso.OM.Realm](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.0/doc/html/Language-Paraiso-OM-Realm.html)
+にある`TArray`か`TScalar`のいづれかであり、それぞれ配列変数およびスカラー変数を表します。
+`con`の位置に入るのは`Int`とか`Double`とかいった要素型ですが、多くの場合は型情報のみがグラフの構築に使われ値は単に無視されます。
+この多相な[`Value`型]を接点にグラフを組み立てることで、できあがったグラフの型安全性が(かなり)保証されます。
+
+Paraisoプログラムを組み立てる材料は
+[Language.Paraiso.OM.Builder](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-OM-Builder.html)
+モジュールに揃っています。モジュールのページに行って、"Synopsis"
+タブを押してください。
+
+The monadic building blocks we use in Paraiso are defined in
+[Language.Paraiso.OM.Builder](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-OM-Builder.html)
+module. Please go to the page, and tap the "Synopsis" tab.
+
+bindが必要なわけ
+----------------
+
+bind trick
+----------
+
+We have already seen several Paraiso programs, and you may have noticed
+the too frequent use of the term `bind`,
+
+これまでもいくつかParaisoのプログラムはでてきましたが、やたらと各行ごとに`bind`があるなあと思われたかもしれません。
+
+> bind :: (Monad m, Functor m) => m a -> m (m a)
+> bind = fmap return
+
+Like this:
+
+こんなふうに。
+
+>   x <- bind $ loadIndex (Axis 0) 
+>   y <- bind $ loadIndex (Axis 1) 
+>   z <- bind $ x*y
+>   w <- bind $ x+y
+
+The above program originally looked like this:
+
+このプログラムは素直に書くと、以下のようになります。
+
+>   x <- loadIndex (Axis 0) 
+>   y <- loadIndex (Axis 1) 
+>   z <- return x * return y
+>   w <- return x + return y
+
+右辺の式`loadIndex (Axis 0)`などは`Builder`モナドから成り立っている一方で、
+左辺の`x,y,z,w`などはデータフローグラフの頂点ですから、`Value`型の値です。このため、いったん左辺で`x`などの
+変数名を束縛したら、その後右辺で使うたびにモナドに変換する必要があります。
+(このとき使うのはむろん、[最小の文脈を付与する`return`](http://t.co/DqcNjwLv)です！)ところが
+`bind = fmap return`により束縛時点で一度`return`を施せば、以降、右辺ではそのまま使えます。
+こちらの方がずっと便利でしょう？
+
+というわけで、Paraisoのサンプルプログラムに出てくる`x,y`といった何気ない変数名はすべてモナディックな値
+であることに注意して下さい。
+
+<!--
+さらに、これには限定的ですがSharing（重複する式を発見し同一化する）の効果もあります。
+実のところモナドを介してSharingをするというのはずっと昔に[試みられて捨てられてたり](http://dl.acm.org/citation.cfm?id=756689)
+します。しかし、Haskellのモナドを扱う能力がずいぶん進歩した今となっては、ここでモナドを使うのはごく自然なことです。
+むろん、`<- bind $`というパターンが並ぶのは醜いので、将来的にはなんらかのQuasiQuoteでも作りたいものです。
+あと完全なSharingを実現するにはノード追加時のチェックが必要です。
+-->
+
+The right hand side expressions are built of `Builder` monads while the
+bound names at the left hand side like `x,y,z,w` are of type `Value`. So
+we need to convert pure values to monads using `return`s. This cannot be
+helped, because we cannot have `x`,`y` and `z` of the same type in such
+expressions like `z <- x*y`. However, there's a solution. By using
+`bind = fmap return`, we apply `return` only once at the binding timing,
+instead of everywhere else later on.
+
+OM instructions
+---------------
+
+直胞機械の命令
+--------------
+
+直胞機械の(実際コンパクトな)命令セットは`Language.Paraiso.OM.Graph`モジュールの
+[`Inst`型](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.0/doc/html/Language-Paraiso-OM-Graph.html#t:Inst)
+として定義されており、
+`Language.Paraiso.OM.Builder`モジュールには、これにほぼ一対一対応する形で材料が用意してあります。
+以下に、それぞれのコンビネータを表形式で整理しておきます。
+`B`を一般のモナド記号`m`だと
+(実際の定義は`type B ret = forall v g a. Builder v g a ret`)
+思うと感覚がつかめるのではないでしょうか。
+
+The instruction set of the Orthotope Machine is defined as algebraic
+data type
+[`Inst`](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.0/doc/html/Language-Paraiso-OM-Graph.html#t:Inst)
+in `Language.Paraiso.OM.Graph` module, and `Language.Paraiso.OM.Builder`
+provides the (almost) corresponding Builder Monad combinators. Here is
+the table of them. Read `B` as the general monad symbol `m`. (The actual
+definition is `type B ret = forall v g a. Builder v g a ret`.)
+
+これが命令セットで、
+
+Here is the instruction set:
+
+> data Inst vector gauge 
+>   = Load StaticIdx
+>   | Store StaticIdx
+>   | Reduce R.Operator 
+>   | Broadcast 
+>   | LoadIndex (Axis vector) 
+>   | LoadSize (Axis vector) 
+>   | Shift (vector gauge) 
+>   | Imm Dynamic 
+>   | Arith A.Operator 
+
+これが対応するモナド・コンビネータです。
+
+and the corresponding monad combinators:
+
+> --           options                    input nodes            output nodes
+> load      :: Named (StaticValue r c)                        -> B (Value r c)
+> store     :: Named (StaticValue r c) -> B (Value r c)       -> B ()
+> reduce    :: Reduce.Operator         -> B (Value TArray c)  -> B (Value TScalar c)
+> broadcast ::                            B (Value TScalar c) -> B (Value TArray c)
+> loadIndex :: Axis v                                         -> B (Value TArray g)
+> loadSize  :: Axis v                                         -> B (Value TScalar g)
+> shift     :: v g                     -> B (Value TArray c)  -> B (Value TArray c)
+> imm       :: c                                              -> B (Value r c)
+
+In short,
+
+-   `Load` takes a static variable, and loads from it, starting the
+    data-flow graph.
+-   `Store` ends the data-flow graph by storing the result to the
+    specified static variable.
+-   `Reduce` turns an array into a scalar value by use of the specified
+    reduction operator.
+-   `Broadcast` does the opposite and turns a scalar value into an array
+    of the same type.
+-   `LoadIndex` is used to retrieve the array index in the specified
+    direction. The result is always an array.
+-   `LoadSize` is used to retrieve the array size in the specified
+    direction. The result is a scalar, of course.
+-   `Shift` is used to move an array by a certain vector `v g`.
+-   `Imm` is to introduce an immediate value.
+-   `Arith` is for arithmetic operations.
+
+We will gradually see the detail via examples.
+
+各命令の機能をひとことで言うと、
+
+-   `load` は名前つき静的変数から読み込む。
+-   `store` は名前つき静的変数へ書き込む。
+-   `reduce` は配列をスカラーに畳み込む。
+-   `broadcast` はスカラーを配列にする。
+-   `loadIndex` は配列の添字を取得。
+-   `loadSize` は配列のサイズを取得。
+-   `shift` はベクトル`v g`を使って配列をずらす。
+-   `imm` は即値を読み込む。
+-   `Arith` はさまざまな算術演算を施す。
+
+となります。各命令の詳細については、これから例で見ていきます。
+
+Arithmetic
+----------
+
+演算子たち
+----------
+
+Where are the combinators for the `Arith` instructions? Well, thanks to
+algebraic type classes defiend in
+[numeric-prelude](http://hackage.haskell.org/package/numeric-prelude),
+we can write Builder expression using the usual arithmetic operators, in
+the same manner as writing ordinary expressions.
+
+そういえば、`Arith`命令に対応するコンビネータが見当たりませんが、どうなってるのでしょうか。
+Paraisoでは、
+[numeric-prelude](http://hackage.haskell.org/package/numeric-prelude)
+というライブラリを使い、Buiderモナドを
+さまざまな代数構造のインスタンスにすることで、
+普通の数式を書くのと同じ感覚でBuiderモナドの数式を組み立てられるようになっています。
+
+> (+) :: B (Value r c) -> B (Value r c) -> B (Value r c) 
+> sin :: B (Value r c) -> B (Value r c)
+
+One important exception to this are Boolean operators. Since Haskell's
+Boolean operators are of type, say, `(==) :: Eq a => a -> a -> Bool`, we
+cannot construct a Builder of Bool out of them. Instead, use functions
+defined in modules
+[Language.Paraiso.OM.Builder.Boolean](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.0/doc/html/Language-Paraiso-OM-Builder-Boolean.html)
+and
+[Language.Paraiso.Prelude](hackage.haskell.org/packages/archive/Paraiso/0.3.0.0/doc/html/src/Language-Paraiso-Prelude.html).
+Also `if` cannot be re-used, so `select` instead.
+
+ただし、HaskellのBoolを扱う演算子に関しては、`(==) :: Eq a => a -> a -> Bool`などの固定された型を持っているため、
+BoolのBuilderを返させることができません。そのため、モジュール
+[Language.Paraiso.OM.Builder.Boolean](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.0/doc/html/Language-Paraiso-OM-Builder-Boolean.html)
+や
+[Language.Paraiso.Prelude](hackage.haskell.org/packages/archive/Paraiso/0.3.0.0/doc/html/src/Language-Paraiso-Prelude.html).
+で定義されている関数で代用してください。
+また`if`も同じ理由でBuilderを組み立てる用途には使えませんので、代わりに`select`を使ってください。
+
+> eq :: B (Value r c) -> B (Value r c) -> B (Value r Bool) 
+> ne :: B (Value r c) -> B (Value r c) -> B (Value r Bool) 
+> select :: B (Value r Bool) -> B (Value r c) -> B (Value r c) -> B (Value r c)
+
+And here's `cast` and `castBy` operators for type conversion. Here
+`cast` is a simple cast whose result type is inferred, while `castTo`
+has an extra argument `c2` that provides the type information but whose
+value is never used.
+
+最後に、型変換のための関数`cast`と`castTo`があります。具体的にどういう型変換コードが生成されるかは対象言語しだいです。
+`cast`は単に型変換する関数で変換先の型の指定は型推論に任せます。これに対し
+`castTo`は引数`c2`で変換先の型を指定できます。`c2`の値は使われません。
+
+> cast   :: B (Value r c1) -> B (Value r c2)
+> castTo :: c2 -> B (Value r c1) -> B (Value r c2)
+
