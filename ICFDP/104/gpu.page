@@ -1,0 +1,56 @@
+---
+format: markdown+lhs
+title: 
+...
+
+はじめてのGPUプログラミング
+===========================
+
+The first GPU programming in Paraiso
+====================================
+
+Now let's move on to the GPU. We need only a few modifications to turn
+the code generator [that uses
+C++](https://github.com/nushio3/Paraiso/blob/donut/examples/HelloWorld/)
+into that [that uses
+CUDA](https://github.com/nushio3/Paraiso/blob/donut/examples/HelloGPU/).
+
+それでは、いよいよGPUプログラミングをやってみましょう。
+[C++コードの生成器](https://github.com/nushio3/Paraiso/blob/donut/examples/HelloWorld/)
+を
+[CUDA用のもの](https://github.com/nushio3/Paraiso/blob/donut/examples/HelloGPU/).
+に書き換えるのは、実際すごく簡単です。
+
+~~~ {.sh}
+$ diff HelloWorld/Generator.hs HelloGPU/Generator.hs
+40c40,42
+<   { Native.directory = "./dist/"
+---
+>   { Native.directory = "./dist/" ,
+>     Native.language  = Native.CUDA,
+>     Native.cudaGridSize = (32,1)
+~~~
+
+The following `Setup` specifies that we want to generate CUDA code, and
+also specifies the CUDA grid dimensions. (The following code will be
+executed with dimensions `<<<32,1>>>`.)
+
+このように、ネイティブコード生成の詳細を指定する`Setup`型の値において、
+CUDAコードを生成したいということと、CUDAのグリッドサイズを指定するだけです。
+(以下の指定の場合、すべてのCUDAカーネルは`<<<32,1>>>`のサイズをもって起動されます。)
+
+> mySetup :: Native.Setup Vec2 Int
+> mySetup =
+>   (Native.defaultSetup $ Vec :~ 10 :~ 20)
+>   { Native.directory = "./dist/" ,
+>     Native.language  = Native.CUDA,
+>     Native.cudaGridSize = (32,1)
+>   }
+
+The generated code has been tested to produce the same result as the C++
+version using nvcc 4.1 (with its built-in thrust) on TSUBAME 2.0 at
+Tokyo Institute of Technology.
+
+生成されたコードは東京工業大学のTSUBAME 2.0で、nvcc
+4.1(と内臓されたthrust)
+を用いて、C++版と同じ出力をすることを確かめました。
