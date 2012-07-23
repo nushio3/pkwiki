@@ -1,0 +1,141 @@
+# Paraisoが生成するC++コードのAPI
+# API for Paraiso-generated codes
+
+今回はParaisoが生成するコードの使い方を見ていきます。`HelloWorld`フォルダで
+`Generator.hs`を実行すると、`dist`というフォルダが作られてその下にC++のヘッダや
+ソースが生成されているはずです。まずはヘッダを見てください。
+
+
+Our `HelloWorld` sample generates C++ code under `dist` folder. First have a 
+look at the header file:
+
+~~~ {.cpp}
+class TableMaker{
+private: std::vector<int>  om_s0_table;
+private: int om_s1_total;
+private: std::vector<int>  om_m0_5;
+public:  TableMaker () : om_s0_table(om_memory_size()),
+  om_m0_5(om_memory_size()) {
+
+}
+~~~
+
+このように、静的変数のための記憶領域やコンストラクタが定義されています。
+
+## Size Accessors
+## サイズ情報の取得
+
+Paraisoの生成するクラスは、この他にもいくつかのアクセッサ関数を定義します。
+まずは、OMのサイズを取得するための関数がこちらです。全領域のサイズおよび、
+各次元ごとのサイズを取得できます。（これサイズが`int`型なのは将来に禍根を残しそうですね・・・）
+
+Here we declare and allocate the memory for the static variables. Next comes the
+accessors for the OM size:
+
+~~~ {.cpp}
+public: int om_size ()  {
+return 200;
+}
+public: int om_size_0 ()  {
+return 10;
+}
+public: int om_size_1 ()  {
+return 20;
+}
+~~~
+
+Paraisoが副次的に生成する関数の名前はすべて`om_`から始まるようになっています。
+ユーザーは静的変数やカーネルに、すべて異なり、かつどれも`om_`から始まらないような
+名前をつけてください。そうすればコード生成時に名前が衝突することはありません。
+
+Note that all the auxiliary functions that Paraiso generates have name prefix `om_`.
+Users should give their variables and kernels unique names not prefixed with `om_`
+to avoid name collisions.
+
+今の`HelloWorld`カーネルにはありませんが、
+配列変数で、近傍の値をとってくる`shift`命令を含むカーネルをコンパイルすると、
+Paraisoは通信のための余白領域を確保し、`[0..size-1]`までの領域が無事に計算できるように
+します。この場合、実際に確保されたメモリの大きさは
+`om_size()`等が返す値よりも大きくなります。このメモリサイズを取得できる関数群が
+`om_memory_size()`などです。
+
+The next series of size functions, `om_memory_size()`, returns the actual size of 
+memory allocated. If the translated OM contains `shift` instructions, Paraiso
+allocates margin region for communications, and
+`om_memory_size()` will be greater than
+`om_size()`.
+
+~~~ {.cpp}
+public: int om_memory_size ()  {
+return 200;
+}
+public: int om_memory_size_0 ()  {
+return 10;
+}
+public: int om_memory_size_1 ()  {
+return 20;
+}
+~~~
+
+そしてこれが余白を取得する関数群です。
+
+And here's the margin functions.
+
+~~~ {.cpp}
+public: int om_lower_margin_0 ()  {
+return 0;
+}
+public: int om_lower_margin_1 ()  {
+return 0;
+}
+public: int om_upper_margin_0 ()  {
+return 0;
+}
+public: int om_upper_margin_1 ()  {
+return 0;
+}
+~~~
+
+## Access to OM Variables
+## OM変数へのアクセス
+
+You get a nice element-wise accessor
+for each static array variable of the OM.
+There are accessors for scalar variables, too.
+
+Array変数に対しては要素へのアクセッサが、Scalar変数に対しては
+単なるアクセッサが定義されます。
+
+~~~ {.cpp}
+public: int & table (int i0, int i1)  {
+return (om_s0_table)[((om_lower_margin_0()) + (i0)) + 
+  ((om_memory_size_0()) * ((om_lower_margin_1()) + (i1)))];
+}
+public: int & total ()  {
+return om_s1_total;
+}
+~~~
+
+You also get a direct access to the raw data structure of each Array 
+although, what the term "raw" means depends on the implementation detail.
+
+また、配列の生データへのアクセッサも提供されますが、「生」データが具体的に
+どんなフォーマットなのかは実装の詳細に依存します。
+
+~~~ {.cpp}
+public: std::vector<int>  & table ()  {
+return om_s0_table;
+}
+~~~
+
+## OM Kernel API
+## OMカーネルの呼出し点
+
+最後に、OMの定義で与えたカーネルに対応するメソッドが生成されます。
+
+Finally, there are class methods that correspond to OM kernels.
+
+~~~ {.cpp}
+public: void create () ;
+};
+~~~
