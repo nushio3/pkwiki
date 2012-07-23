@@ -1,0 +1,211 @@
+# はじめての直胞機械プログラミング
+# Writing your first Orthotope Machine Program
+
+Paraisoは、一様メッシュ上での偏微分方程式の陽解法という分野に特化し、
+その分野の計算を、直胞機械(Orthotope Machineの訳語、今決めた)と呼ばれる仮想機械
+のプログラムとして表します。
+直胞機械は、配列変数とその操作を表現する仮想機械であり、
+解きたい問題の内包する並列性をなるべく生かすように設計されています。
+たとえば、配列変数の要素を格納する順序や、アクセスする順序は自由。
+命令どうしの依存関係もはじめから明確で、依存性のない命令を実行する順序も、同時に実行することも自由です。
+Paraisoは、この直胞機械のプログラムを記述し、
+それを既存の言語のプログラムに翻訳し、
+さらに自動チューニングを行うための様々なメカニズムを備えたフレームワークです。
+より詳しい用語の解説などは[Paraisoの論文](http://arxiv.org/abs/1204.4779)を見てください。
+
+
+
+Paraiso is language embedded in Haskell, specialized in the domain of explicit solvers
+of partial differential equations on uniform mesh. The computation of the domain is 
+represented as the programs of the Orthotope Machine(OM). The Orthotope Machine is design to 
+capture all of the parallelism inherent in the original problem. It is free from the order
+the elements of the array is stored and accessed. The dependencies between the  instructions of  the machine are 
+clearly specified and independent instructions can be issued in any order  or in parallel.
+Paraiso is the framework built around this OM; it can translate mathematical descriptions of the PDE-solving algorithm
+to OM programs; it can convert OM programs to native programs in C++ and CUDA; it can automatically tune them
+using evolutionary computation.
+Please refer to [Paraiso paper](http://arxiv.org/abs/1204.4779) for more details.<br/>
+
+But in one short sentence, all you need to do is to
+create a value of type [`OM`](http://hackage.haskell.org/packages/archive/Paraiso/latest/doc/html/Language-Paraiso-OM.html) and pass it to the code generator.     
+
+
+しかし、Paraisoにコードを生成させるためにユーザーがすべきことを、具体的に一言でいうなら、
+「[`OM`](http://hackage.haskell.org/packages/archive/Paraiso/latest/doc/html/Language-Paraiso-OM.html) 型の値を作り、コードジェネレータに渡すこと」となります。    
+
+
+
+## ハローワールドの中身
+
+## Dive into the code
+
+Our first sample code [`examples/HelloWorld/Generator.hs`](https://github.com/nushio3/Paraiso/blob/donut/examples/HelloWorld/Generator.hs) includes everything you need to tell Paraiso to let him generate code for you. Let's look inside it!
+
+前回掲載したサンプル[`examples/HelloWorld/Generator.hs`](https://github.com/nushio3/Paraiso/blob/donut/examples/HelloWorld/Generator.hs)には、Paraisoにコードを生成させるための全てが記されています。順にみていきましょう。
+
+The first few lines are something like `#include <stdio.h>`.
+
+最初の十数行は`#include <stdio.h>`みたいなもんで、必要なモジュールをインクルードしています。
+
+
+
+> {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
+> {-# OPTIONS -Wall #-}
+> 
+> import           Data.Tensor.TypeLevel
+> import qualified Data.Text.IO as T
+> import           Language.Paraiso.Annotation (Annotation)
+> import           Language.Paraiso.Generator (generateIO)
+> import qualified Language.Paraiso.Generator.Native as Native
+> import           Language.Paraiso.Name
+> import           Language.Paraiso.OM
+> import           Language.Paraiso.OM.Builder
+> import           Language.Paraiso.OM.DynValue (f2d, DynValue)
+> import           Language.Paraiso.OM.Value (StaticValue(..))
+> import           Language.Paraiso.OM.PrettyPrint (prettyPrintA1)
+> import           Language.Paraiso.OM.Realm 
+> import qualified Language.Paraiso.OM.Reduce as Reduce
+> import           Language.Paraiso.Optimization
+> import           NumericPrelude
+> import           System.Process (system)
+
+
+
+First, let's look at `main` routine. The first line creates an output folder.
+The second line is for pretty-printing the data-flow graphs of our first
+Orthotope Machine, namely `myOM`.
+This is just for your interest; it's not a necessary step for the code generation.
+The third line is the most important; it combines the `myOM`
+with `mySetup` and generates the C++ code.
+
+まずは`main`から見ていきましょう。
+一行目は`"output"`というフォルダを作っています。
+二行目では、`myOM`という名の直胞機械
+のデータフロー・グラフを出力しています。
+これは参考のために出力しているのであって、コード生成に必須の過程ではありません。
+三行目では、`myOM`の定義と
+`mySetup`というコード生成時の設定を渡して
+C++のコードを生成しています。
+
+
+
+> -- the main program
+> main :: IO ()
+> main = do
+>   _ <- system "mkdir -p output"
+>   T.writeFile "output/OM.txt" $ prettyPrintA1 $ myOM
+>   _ <- generateIO mySetup myOM
+>   return ()
+
+
+
+The data type `Setup`, defined in
+`Language.Paraiso.Generator.Native`, is responsible for all kinds of data
+needed at native-code generation timing but not needed in defining the abstract
+Orthotope Machine. Here, we specify the size of the actual OM to be generated,
+and the folder for the generated library. The default target language for code generation
+is C++.
+
+
+
+直胞機械を定義する時には使わないが、
+コード生成時にはじめて必要になる情報は
+`Language.Paraiso.Generator.Native`モジュールにある
+`Setup`型でまとめて指定します。ここでは
+具体的な計算のサイズや、
+ライブラリを生成するフォルダを指定しています。
+コード生成対象の言語はデフォルトではC++です。
+
+
+> -- the code generation setup
+> mySetup :: Native.Setup Vec2 Int
+> mySetup = 
+>   (Native.defaultSetup $ Vec :~ 10 :~ 20)
+>   { Native.directory = "./dist/" 
+>   }
+
+
+次はいよいよ`myOM`の定義です。
+直胞機械を定義するには、
+名前(`tableMaker`)、マシン全体の注釈、静的変数のリスト、カーネルのリスト の4つを
+`makeOM`関数に渡します。
+
+Next, let's look at the definition of `myOM`.
+To define an OM, pass four arguments, namely its name, the list of its global annotations,
+the list of its static variables, the list of its kernels,
+to function `makeOM`.
+
+
+> -- the orthotope machine to be generated
+> myOM :: OM Vec2 Int Annotation
+> myOM = optimize O3 $
+>   makeOM (mkName "TableMaker") [] myVars myKernels
+
+
+
+
+`myOM` has two static variables. One is the array for the multiplication table;
+the other is for calculating the total of the table. They are `Array` and`Scalar` `Realm`,
+respectively. They also have their `Name`.
+
+`myOM`には、九九の表を保持するための`table`と、その合計を計算するための
+`total`という2つの変数があります。2つの変数の`Realm`は、それぞれ
+`Array`と`Scalar`です。`Array`変数は解きたい問題の解像度とおなじサイズをもつ配列変数で、
+`Scalar`変数は普通に1つしかない値です。
+それぞれの変数は`Name`も持っています。
+
+
+> -- the variables we use
+> table :: Named (StaticValue TArray Int)
+> table = "table" `isNameOf` StaticValue TArray  undefined
+> 
+> total :: Named (StaticValue TScalar Int)
+> total = "total" `isNameOf` StaticValue TScalar undefined
+> 
+> myVars :: [Named DynValue]
+> myVars = [f2d table, f2d total]
+
+
+The type `Name`, defined in the module
+`Language.Paraiso.Name`, is just a newtype for 
+`Text` defined in `Data.Text` module. We newtype it to distinguish the identifiers
+from the rest of the text.
+
+Paraisoでは、
+`Language.Paraiso.Name`モジュールで定義されている
+`Name`型を識別子の名前として使います。これは、ただの文字列と区別するために、
+`Data.Text`モジュールの提供するマルチバイト文字列型`Text`をnewtypeしたものです。
+
+
+次にカーネルの定義です。OMのカーネルとは、一度に実行される計算のかたまりです。
+`myOM`には`create`という名前のカーネルがひとつだけあります。
+
+`myOM` has one kernel, called `create`. A kernel of an OM is a bunch of computation
+that is performed at once.
+
+
+> -- the only kernel our OM has
+> myKernels :: [Named (Builder Vec2 Int Annotation ())]
+> myKernels = ["create" `isNameOf` createBuilder]
+
+
+Finally, you can make OM kernels by using `Builder Monad` combinators.
+Here, let's make a two-dimensional OM kernel that loads *x* and *y* indices and
+multiply them. Let's also calculate the grand-sum of the table.
+
+カーネルを作るには`Builder Monad`を使います。ここでは、*x* 軸と *y* 軸の添字を
+読み込んでその積を計算するカーネルを作っています。ついでに九九の表の総計も
+求めてみましょう。
+
+
+> -- the kernel builder monad
+> createBuilder :: Builder Vec2 Int Annotation ()
+> createBuilder = do 
+>   x <- bind $ loadIndex (Axis 0) 
+>   y <- bind $ loadIndex (Axis 1) 
+>   z <- bind $ x*y
+>   store table z
+>   store total $ reduce Reduce.Sum z
+
+
+
