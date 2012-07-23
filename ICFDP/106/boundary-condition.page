@@ -1,0 +1,134 @@
+---
+format: markdown+lhs
+title: 
+...
+Boundary Condition in Paraiso
+=============================
+
+Paraisoの境界条件
+=================
+
+直胞機械の`shift`命令は配列変数全体を平行移動する命令です。実際のコードが扱う配列変数は常に有限サイズですから、平行移動によりはみ出す部分の処理を境界条件により指定してやる必要があります。
+Paraisoは、データフローグラフの中の`shift`命令を解析して、境界条件を実現するのに必要な処理(袖領域など)を追加してくれます。
+
+The `shift` instruction of Orthotope Machine is displace the array by a
+constant vector. Because every array has a finite size, the users must
+set the boundary condition to specify how the out-of-bound access are
+treated.
+
+Paraisoでは、今のところ周期境界と自由境界という二種類の境界条件をサポートしています。\
+コード生成時、次元ごとにいづれかの境界条件を選ぶことができます。\
+この二種類とほかの命令を組み合わて作れる範囲で、より複雑な境界条件も扱えます。\
+境界条件は、\
+[`Setup`データ型](http://www.paraiso-lang.org/haddock/Paraiso/Language-Paraiso-Generator-Native.html#t:Setup)
+の`boundary`レコードで、\
+[`Condition`型](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-Annotation-Boundary.html#t:Condition)\
+を要素にもつベクトルとして指定します。
+
+Current Paraiso supports two boundary conditions; open boundary and
+cyclic boundary.\
+You can choose boundary condition for every dimension independently\
+by setting a value of the type **vector of
+[`Condition`](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-Annotation-Boundary.html#t:Condition)**
+in `boundary` field of the [`Setup`
+data](http://www.paraiso-lang.org/haddock/Paraiso/Language-Paraiso-Generator-Native.html#t:Setup).
+
+二種類の境界条件のうち、周期境界は、単に右端からはみ出したアクセスは左端のものを見るだけです。いわゆるドラクエ地図です。
+
+Of the two, the cyclic boundary condition is simple. Out-of-bound
+accesses see the other side of the array.
+
+これに対し、自由境界の場合は少々複雑です。まず、袖領域は、どのParaisoカーネルを1ステップ実行しても、\
+[Setup](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-Generator-Native.html#t:Setup)
+で指定した計算したい領域、添字が0以上`localSize`未満の領域が埋めるのに必要十分なサイズをもって決まります。\
+次に、各カーネルの計算する範囲は、袖領域をふくめた最大の領域から開始し、なるべく大きな領域を埋めるように決まります。
+その領域の外側での値は未定義です。また、`Reduce`演算はつねに袖領域をふくむ全体を畳み込みます。もし袖領域を除外したい
+場合は手動でマスクする必要があります。
+
+The open boundary condition is rather complicated. First, the size of
+margin regions are determined so that any Paraiso kernel can cover the
+region you said you wanted to calculate. You have specified the region
+`0 <= i < localSize` in the
+[Setup](http://hackage.haskell.org/packages/archive/Paraiso/0.3.1.1/doc/html/Language-Paraiso-Generator-Native.html#t:Setup).
+Next, each kernel start the calculation from the maximum region
+including the margins, and calculates as large region as possible. The
+array values out of that region are undefined. Also, the reduction
+operators always reduce over the entire margined region. You need to
+manually mask the margins if you want to.
+
+[このサンプルプログラム](https://github.com/nushio3/Paraiso/tree/master/examples/ShiftExample)で境界条件の挙動を確かめてみましょう。
+このプログラムには3つのカーネルがあります。
+
+Please look at [the sample
+program](https://github.com/nushio3/Paraiso/tree/master/examples/ShiftExample)
+to understand how Paraiso deals with the boundary conditions. This
+program has three kernels:
+
+> myKernels :: [Named (Builder Vec1 Int Annotation ())]
+> myKernels =
+>   ["init" `isNameOf` do
+>       store table $ loadIndex (Axis 0)
+> 
+>   ,"increment" `isNameOf` do
+>       store table $ 1 + load table
+> 
+>   ,"calculate" `isNameOf` do
+>       center <- bind $ load table
+>       right  <- bind $ shift (Vec :~ (-1)) center
+>       left   <- bind $ shift (Vec :~ ( 1)) center
+>       ret    <- bind $ 10000 * left + 100 * center + right
+>       store table ret
+>       store total $ reduce Reduce.Sum ret
+>   ]
+
+それぞれ、「配列の内容を配列添字で初期化する」「配列の内容に1を加える」
+「ひとつ右とひとつ左の内容を読んで値を計算する」カーネルです。
+
+The first kernel initializes the array elements with their respective
+indices. The second adds 1 to every element. The third reads adjacent
+cells and perform some calculations. Let's give it a go:
+
+~~~ {.cpp}
+  maker.init();
+  dump();
+  maker.increment();
+  dump();
+  maker.calculate();
+  dump();
+  cout << "total: " << maker.total() << endl;
+  cout << endl;
+~~~
+`make`を実行すると、境界条件だけが異なる2種類のプログラムが生成されます。
+このように、周期境界条件のもとでは境界を飛び越えて反対側の値にアクセスできます。
+
+Say `make` and two program will be generated. They are the same but for
+the boundary conditions. Under the cyclic boundary condition, you can
+read across the boundary, as follows:
+
+~~~ {.sh}
+$ ./main-cyclic.out
+index:      0      1      2      3      4      5      6      7
+value:      0      1      2      3      4      5      6      7
+index:      0      1      2      3      4      5      6      7
+value:      1      2      3      4      5      6      7      8
+index:      0      1      2      3      4      5      6      7
+value:  80102  10203  20304  30405  40506  50607  60708  70801
+total: 363636
+~~~
+一方、自由境界のもとでは袖領域が追加され、0未満、あるいは`localSize`以上の添字の範囲にも
+アクセスできます。
+
+On the other hand if you use the open boundary condition, Paraiso adds
+the margin regions for you, and you can access indices beyond 0 and
+`localSize`.
+
+~~~ {.sh}
+$ ./main-open.out
+index:     -1      0      1      2      3      4      5      6      7      8
+value:     -1      0      1      2      3      4      5      6      7      8
+index:     -1      0      1      2      3      4      5      6      7      8
+value:      0      1      2      3      4      5      6      7      8      9
+index:     -1      0      1      2      3      4      5      6      7      8
+value:      0    102  10203  20304  30405  40506  50607  60708  70809      0
+total: 283644
+~~~
