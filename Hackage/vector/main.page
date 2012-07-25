@@ -1,0 +1,17 @@
+> {-# OPTIONS -Wall #-}
+
+Is the following two libraries
+
+> import qualified Numeric.FFT.Vector.Invertible as FFT
+> import qualified Data.Vector.Unboxed as V
+> import Data.Complex
+
+> main :: IO ()
+> main = do
+>   let n :: Int
+>       n = 32
+>       xs :: V.Vector (Complex Double)
+>       xs = V.generate n fromIntegral 
+>       ys = FFT.run FFT.dft xs
+>   print ys
+>   
