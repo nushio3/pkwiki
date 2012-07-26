@@ -28,24 +28,20 @@ Let's Study [Programming Language]()!
 
 What would happen if one creates a [wiki]() page?
 
-## コードを書いてみるテスト
+## Paraisoコードをとりあえず試す方法
+## How to test your first Paraiso code generation
 
-## Some test
+Install the [Haskell Platform](http://hackage.haskell.org/platform/) and type following to download and execute sample from [github](https://github.com/nushio3/Paraiso); 
 
-My first edit
-
-
+[Haskell Platform](http://hackage.haskell.org/platform/)をインストールし、[github](https://github.com/nushio3/Paraiso)から次のようにしてインストールし、サンプルを実行します。
 
 
-    #include <stdbool.h>
-    #include <unistd.h>
-~~~ { .haskell }
-let a = 1:a in head a
 ~~~
-
-
-``a::IO ()``
-
-### Plugin test
-
-@nushio
+git clone https://github.com/nushio3/Paraiso.git
+cd Paraiso/
+cabal configure
+cabal install
+cd examples/Life/
+make
+./main.out
+~~~
