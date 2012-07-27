@@ -5,7 +5,7 @@
 I am now trying to migrate the Paraiso-wiki to gitit.
 
 Please have a look at
-[the paper](http://iopscience.iop.org/1749-4699/5/1/015003/), 
+[the paper](http://iopscience.iop.org/1749-4699/5/1/015003/),
 [the blog](http://nushisblogger.blogspot.jp/search/label/ICFDP), or
 [the hackage](http://hackage.haskell.org/package/Paraiso)
 while I'm fixing this.
@@ -21,7 +21,7 @@ Wikiたちあげ中です・・・
 
 Help is always available through the "Help" link in the sidebar.
 More details on installing and configurating gitit are available
-in the [Gitit User's Guide]().
+in the [Gitit User's Guide](users-guide).
 
 
 Let's Study [Programming Language]()!
@@ -31,7 +31,7 @@ What would happen if one creates a [wiki]() page?
 ## Paraisoコードをとりあえず試す方法
 ## How to test your first Paraiso code generation
 
-Install the [Haskell Platform](http://hackage.haskell.org/platform/) and type following to download and execute sample from [github](https://github.com/nushio3/Paraiso); 
+Install the [Haskell Platform](http://hackage.haskell.org/platform/) and type following to download and execute sample from [github](https://github.com/nushio3/Paraiso);
 
 [Haskell Platform](http://hackage.haskell.org/platform/)をインストールし、[github](https://github.com/nushio3/Paraiso)から次のようにしてインストールし、サンプルを実行します。
 
