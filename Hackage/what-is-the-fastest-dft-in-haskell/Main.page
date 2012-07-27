@@ -1,0 +1,8 @@
+---
+format: markdown+lhs
+title: What is the fastest FFT in Haskell?
+...
+
+> main :: IO ()
+> main = do
+>   putStrLn "Hello!"
