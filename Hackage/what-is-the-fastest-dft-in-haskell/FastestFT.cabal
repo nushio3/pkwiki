@@ -15,9 +15,9 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 executable judge
-  main-is: Main.lhs            
+  main-is: main.lhs            
   -- other-modules:       
-  build-depends:     base >= 4.5
+  build-depends:     base >= 4.5, process, criterion
 
 executable client-vector-fft
   main-is: client-vector-fft.lhs
