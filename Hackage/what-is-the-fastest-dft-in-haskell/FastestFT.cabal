@@ -14,13 +14,13 @@ maintainer:          muranushi@gmail.com
 build-type:          Simple
 cabal-version:       >=1.8
 
-executable FastestFT
+executable judge
   main-is: Main.lhs            
   -- other-modules:       
   build-depends:     base >= 4.5
 
-executable vector
-  main-is: ../vector/main.lhs            
+executable client-vector-fft
+  main-is: client-vector-fft.lhs
   -- other-modules:       
   build-depends:     base >= 4.5,
                      vector,
