@@ -2,7 +2,7 @@
 
 Is the following two libraries
 
-> module ClientVectorFFT where
+> module ClientVectorFFTW where
 
 > import Control.Applicative
 > import qualified Numeric.FFT.Vector.Invertible as FFT
