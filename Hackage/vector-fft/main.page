@@ -2,42 +2,36 @@
 
 Is the following two libraries
 
-> import Control.Applicative 
+> module ClientVectorFFT where
+
+> import Control.Applicative
 > import qualified Numeric.FFT.Vector.Invertible as FFT
 > import qualified Data.Vector.Unboxed as V
 > import Data.Complex
 
-> main :: IO ()
-> main = do
->   input <- words <$> getContents
->   let useWisdom :: Bool
->       useWisdom = (input!!0 == "1")
->       xs :: [Double]        
->       xs = map read $ drop 1 input
->       ns  :: [Int] 
->       ns = map read $ drop 5 input
->   putStrLn $ unlines $ map show $ solve xs ns
+> import Solver
 
-
-> solve :: [Double] -> [Int] -> [Double]
-> solve (x1:x2:y1:y2:_) (n:iter:_) = [ans1, ans2]
+> solver :: Solver
+> solver prob = return (ans1, ans2)
 >   where
+>     n :: Int
+>     n = probSize prob
 >     realN :: Double
 >     realN = fromIntegral n
 >     initVect, finalVect :: V.Vector (Complex Double)
->     initVect = V.generate n initF 
+>     initVect = V.generate n initF
 >     initF :: Int -> Complex Double
 >     initF i = re :+ im
 >       where
 >         r = (fromIntegral i + 0.5) / realN
->         re | (x1 < r && r < x2) = 1
->            | otherwise          = 0
->         im = (r-y1)*(r-y2)
+>         re | (x1 prob < r && r < x2 prob) = 1
+>            | otherwise                    = 0
+>         im = (r-y1 prob)*(r-y2 prob)
 >     planFwd = FFT.plan FFT.dft  n
 >     planBwd = FFT.plan FFT.idft n
 >     step :: V.Vector (Complex Double) -> V.Vector (Complex Double)
 >     step = FFT.execute planBwd . FFT.execute planFwd
->     finalVect = foldl1 (.) (replicate iter step) $ initVect
+>     finalVect = foldl1 (.) (replicate (probRepeat prob) step) $ initVect
 >     amp ::  V.Vector (Complex Double) -> Double
 >     amp =  V.sum . V.map ((^2) . magnitude)
 >     ans1 = amp finalVect / realN
