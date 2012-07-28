@@ -39,7 +39,7 @@ title: What is the fastest FFT in Haskell?
 
 > main :: IO ()
 > main = defaultMain $ (:[]) $ bgroup "fft" $ do
->   exeFn <- candidates
 >   n <- map (2^) [10,12..(20::Int)]
 >   iter <- [1,101]
+>   exeFn <- candidates
 >   return $ makeBenchmark exeFn n iter
