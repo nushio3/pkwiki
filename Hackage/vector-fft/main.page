@@ -2,16 +2,43 @@
 
 Is the following two libraries
 
+> import Control.Applicative 
 > import qualified Numeric.FFT.Vector.Invertible as FFT
 > import qualified Data.Vector.Unboxed as V
 > import Data.Complex
 
 > main :: IO ()
 > main = do
->   let n :: Int
->       n = 32
->       xs :: V.Vector (Complex Double)
->       xs = V.generate n fromIntegral 
->       ys = FFT.run FFT.dft xs
->   print ys
->   
+>   input <- words <$> getContents
+>   let useWisdom :: Bool
+>       useWisdom = (input!!0 == "1")
+>       xs :: [Double]        
+>       xs = map read $ drop 1 input
+>       ns  :: [Int] 
+>       ns = map read $ drop 5 input
+>   putStrLn $ unlines $ map show $ solve xs ns
+
+
+> solve :: [Double] -> [Int] -> [Double]
+> solve (x1:x2:y1:y2:_) (n:iter:_) = [ans1, ans2]
+>   where
+>     realN :: Double
+>     realN = fromIntegral n
+>     initVect, finalVect :: V.Vector (Complex Double)
+>     initVect = V.generate n initF 
+>     initF :: Int -> Complex Double
+>     initF i = re :+ im
+>       where
+>         r = (fromIntegral i + 0.5) / realN
+>         re | (x1 < r && r < x2) = 1
+>            | otherwise          = 0
+>         im = (r-y1)*(r-y2)
+>     planFwd = FFT.plan FFT.dft  n
+>     planBwd = FFT.plan FFT.idft n
+>     step :: V.Vector (Complex Double) -> V.Vector (Complex Double)
+>     step = FFT.execute planBwd . FFT.execute planFwd
+>     finalVect = foldl1 (.) (replicate iter step) $ initVect
+>     amp ::  V.Vector (Complex Double) -> Double
+>     amp =  V.sum . V.map ((^2) . magnitude)
+>     ans1 = amp finalVect / realN
+>     ans2 = amp (FFT.execute planFwd $ finalVect) / realN^2

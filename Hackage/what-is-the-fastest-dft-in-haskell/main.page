@@ -15,21 +15,31 @@ title: What is the fastest FFT in Haskell?
 >     {std_in = CreatePipe, std_out = CreatePipe}
 >   let wisdomFlag :: Int
 >       x1, x2, y1, y2 :: Double
+>       expectedAns, accuracy :: Double
 >       wisdomFlag = 0
 >       x1 = 1/4; x2 = 3/4; y1 = 1/3; y2 = 2/3
+>       expectedAns = (x2-x1) + f y1 y2
+>       f a b = 1/5 - (a+b)/2 + 1/3*(a**2+4*a*b+b**2) - a*b*(a+b) + a**2*b**2
+>       accuracy = max  (fromIntegral n **(-2)) (1e-16 * fromIntegral n)
+>       passTest x = abs(x-expectedAns) < accuracy
 >   hPutStrLn hin $ printf "%d %f %f %f %f %d %d"
 >     wisdomFlag x1 x2 y1 y2 n iter
 >   hClose hin
->   ans <- hGetContents hout
+>   ansStr <- hGetContents hout
+>   let pass = all passTest $ map read $ words ansStr
+>   when (not pass) $ do
+>     hPutStr stderr $ printf
+>       "wrong answer! expected %f +- %f, got:\n%s"
+>       expectedAns accuracy ansStr
 >   _ <- waitForProcess pid
->   return ans
+>   return pass
 
 > candidates :: [FilePath]
-> candidates = ["./client-fftw-cpp"]
+> candidates = ["./client-fftw-cpp", "./dist/build/client-vector-fft/client-vector-fft"]
 
 > main :: IO ()
 > main = defaultMain $ (:[]) $ bgroup "fft" $ do
 >   exeFn <- candidates
 >   n <- map (2^) [10,12..(20::Int)]
->   iter <- [1,100]
+>   iter <- [1,101]
 >   return $ makeBenchmark exeFn n iter

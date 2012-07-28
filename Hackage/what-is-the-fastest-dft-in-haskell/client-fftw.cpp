@@ -1,6 +1,7 @@
 #include <cmath>
 #include <complex>
 #include <fftw3.h>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 
@@ -19,9 +20,9 @@ int main () {
   fftw_plan fft_plan_bwd = fftw_plan_dft_1d(n, fft_work_out, fft_work_in, FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for (int i = 0; i < n; ++i) {
-    double r = double(i)/n;
+    double r = (i+0.5)/n;
     fft_work_in[i][0] = (x1<r && r<x2) ? 1 : 0;
-    fft_work_in[i][1] = r*(r-y1)*(r-y2)*(r-1);
+    fft_work_in[i][1] = (r-y1)*(r-y2);
   }
   for (int ctr = 0; ctr < iteration; ++ctr) {
     fftw_execute(fft_plan_fwd);
@@ -31,17 +32,20 @@ int main () {
       fft_work_in[i][1] /= n;
     }
   }
-  fftw_execute(fft_plan_fwd);
+
+  cout << setprecision(20);
   double sum = 0;
+  for (int i = 0; i < n; ++i) {
+    sum += pow(fft_work_in[i][0],2) + pow(fft_work_in[i][1],2);
+  }
+  cout << sum/n << endl;
+
+  fftw_execute(fft_plan_fwd);
+
+  sum = 0;
   for (int i = 0; i < n; ++i) {
     sum += pow(fft_work_out[i][0],2) + pow(fft_work_out[i][1],2);
   }
   cout << sum/n/n << endl;
 
-  fftw_execute(fft_plan_bwd);
-  sum = 0;
-  for (int i = 0; i < n; ++i) {
-    sum += pow(fft_work_in[i][0],2) + pow(fft_work_in[i][1],2);
-  }
-  cout << sum/n/n/n << endl;
 }
