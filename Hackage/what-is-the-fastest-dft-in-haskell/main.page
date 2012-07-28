@@ -12,7 +12,7 @@ title: What is the fastest FFT in Haskell?
 
 > import Solver
 
-> import qualified ClientVectorFFT 
+> import qualified ClientVectorFFTW
 
 > fromExe :: FilePath -> Solver
 > fromExe exeFn prob = do
@@ -47,7 +47,7 @@ title: What is the fastest FFT in Haskell?
 > candidates :: [(String, Solver)]
 > candidates = [
 >   ("cpp", fromExe "./client-fftw-cpp"),
->   ("vector-fftw", ClientVectorFFT.solver)
+>   ("vector-fftw", ClientVectorFFTW.solver)
 >   ]
 
 
