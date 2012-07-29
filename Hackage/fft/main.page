@@ -1,0 +1,38 @@
+> {-# OPTIONS -Wall #-}
+
+Is the following two libraries
+
+> module ClientVectorFFTW where
+
+> import Control.Applicative
+> import qualified Numeric.FFT.Vector.Invertible as FFT
+> import qualified Data.Vector.Unboxed as V
+> import Data.Complex
+
+> import Solver
+
+> solver :: Solver
+> solver prob = return (ans1, ans2)
+>   where
+>     n :: Int
+>     n = probSize prob
+>     realN :: Double
+>     realN = fromIntegral n
+>     initVect, finalVect :: V.Vector (Complex Double)
+>     initVect = V.generate n initF
+>     initF :: Int -> Complex Double
+>     initF i = re :+ im
+>       where
+>         r = (fromIntegral i + 0.5) / realN
+>         re | (x1 prob < r && r < x2 prob) = 1
+>            | otherwise                    = 0
+>         im = (r-y1 prob)*(r-y2 prob)
+>     planFwd = FFT.plan FFT.dft  n
+>     planBwd = FFT.plan FFT.idft n
+>     step :: V.Vector (Complex Double) -> V.Vector (Complex Double)
+>     step = FFT.execute planBwd . FFT.execute planFwd
+>     finalVect = foldl1 (.) (replicate (probRepeat prob) step) $ initVect
+>     amp ::  V.Vector (Complex Double) -> Double
+>     amp =  V.sum . V.map ((^2) . magnitude)
+>     ans1 = amp finalVect / realN
+>     ans2 = amp (FFT.execute planFwd $ finalVect) / realN^2
