@@ -5,21 +5,24 @@ title: control-monad-loop
 
 This is a DFT solver that conforms to
 [DFT contest](../what-is-the-fastest-dft-in-haskell/main)
-regulation. Our module is one that uses
-[vector-fftw](http://hackage.haskell.org/packages/vector-fftw)
-package.
+regulation. Our module:
 
 > {-# OPTIONS -Wall #-}
 > module ClientVectorFFTW where
->
+
+uses
+[vector-fftw](http://hackage.haskell.org/packages/vector-fftw)
+package:
+
 > import Control.Applicative
 > import qualified Numeric.FFT.Vector.Invertible as FFT
 > import qualified Data.Vector.Unboxed as V
 > import Data.Complex
 
-[](../what-is-the-fastest-dft-in-haskell/Solver.hs)
-> import Solver
+and conforms to the [Solver](../what-is-the-fastest-dft-in-haskell/Solver.hs)
+regulations.
 
+> import Solver
 > solver :: Solver
 > solver prob = return (ans1, ans2)
 >   where
@@ -27,6 +30,8 @@ package.
 >     n = probSize prob
 >     realN :: Double
 >     realN = fromIntegral n
+
+
 >     initVect, finalVect :: V.Vector (Complex Double)
 >     initVect = V.generate n initF
 >     initF :: Int -> Complex Double
@@ -36,10 +41,16 @@ package.
 >         re | (x1 prob < r && r < x2 prob) = 1
 >            | otherwise                    = 0
 >         im = (r-y1 prob)*(r-y2 prob)
+
 >     planFwd = FFT.plan FFT.dft  n
 >     planBwd = FFT.plan FFT.idft n
+
 >     step :: V.Vector (Complex Double) -> V.Vector (Complex Double)
 >     step = FFT.execute planBwd . FFT.execute planFwd
+
+Regulation tells us to perfrom forward then backward DFT
+`probRepeat prob` times.
+
 >     finalVect = foldl1 (.) (replicate (probRepeat prob) step) $ initVect
 >     amp ::  V.Vector (Complex Double) -> Double
 >     amp =  V.sum . V.map ((^2) . magnitude)
