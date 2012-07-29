@@ -1,15 +1,23 @@
+---
+format: markdown+lhs
+title: control-monad-loop
+...
+
+This is a DFT solver that conforms to
+[DFT contest](../what-is-the-fastest-dft-in-haskell/main)
+regulation. Our module is one that uses
+[vector-fftw](http://hackage.haskell.org/packages/vector-fftw)
+package.
+
 > {-# OPTIONS -Wall #-}
-
-Is the following two libraries
-Overwrite
-
 > module ClientVectorFFTW where
-
+>
 > import Control.Applicative
 > import qualified Numeric.FFT.Vector.Invertible as FFT
 > import qualified Data.Vector.Unboxed as V
 > import Data.Complex
 
+[](../what-is-the-fastest-dft-in-haskell/Solver.hs)
 > import Solver
 
 > solver :: Solver

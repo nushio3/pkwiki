@@ -2,11 +2,11 @@
 
 Is the following two libraries
 
-> module ClientVectorFFTW where
+> module ClientFFT where
 
 > import Control.Applicative
-> import qualified Numeric.FFT.Vector.Invertible as FFT
-> import qualified Data.Vector.Unboxed as V
+> import qualified Math.FFT as FFT
+> import qualified Data.Array.CArray as V
 > import Data.Complex
 
 > import Solver
