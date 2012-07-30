@@ -3,12 +3,17 @@ format: markdown+lhs
 title: What is the fastest FFT in Haskell?
 ...
 
+Let us use [criterion](http://hackage.haskell.org/package/criterion) to compare them.
+
+> import Criterion.Main
+> 
 > import Control.Applicative
 > import Control.Monad
-> import Criterion.Main
 > import System.IO
 > import System.Process
 > import Text.Printf
+
+The [Solver.hs] defines the interface for the contestants.
 
 > import Solver
 
