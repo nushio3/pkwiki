@@ -13,7 +13,7 @@ Let us use [criterion](http://hackage.haskell.org/package/criterion) to compare 
 > import System.Process
 > import Text.Printf
 
-The [Solver](../what-is-the-fastest-dft-in-haskell/Solver.hs) defines the interface for the contestants.
+The [Solver](./Solver.hs) defines the interface for the contestants.
 
 > import Solver
 
