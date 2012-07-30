@@ -1,6 +1,6 @@
 ---
 format: markdown+lhs
-title: What is the fastest FFT in Haskell?
+title: What is the fastest DFT(discrete Fourier transform) in Haskell?
 ...
 
 Let us use [criterion](http://hackage.haskell.org/package/criterion) to compare them.
@@ -14,10 +14,21 @@ Let us use [criterion](http://hackage.haskell.org/package/criterion) to compare 
 > import Text.Printf
 
 The [Solver](./Solver.hs) defines the interface for the contestants.
+An initial function is given to the contestants, specified by four parameters.
+Then contestants are to repeatedly apply the Fourier transformation
+and inverse Fourier transformation on the given function
+for specified times. Finally, the contestants should measure the power of the
+function, both in the real space and in the wave space, and report them.
+In this way, the communication cost is minimized and we expect the better measurement
+of the DFT part.
 
 > import Solver
 
+Here are the contestants that provide the solvers;
+
 > import qualified ClientVectorFFTW
+
+And here is another type of contestants that communicates via standard I/O;
 
 > fromExe :: FilePath -> Solver
 > fromExe exeFn prob = do
@@ -30,6 +41,8 @@ The [Solver](./Solver.hs) defines the interface for the contestants.
 >   hClose hin
 >   (ans1: ans2: _) <- map read . words <$> hGetContents hout
 >   return (ans1, ans2)
+
+Every contestant's result must pass the test:
 
 > quarantine :: Solver -> Solver
 > quarantine solver prob = do
@@ -48,6 +61,7 @@ The [Solver](./Solver.hs) defines the interface for the contestants.
 >       expectedAns (show (ans1, ans2))
 >   return (ans1, ans2)
 
+Now here are the list of contestants:
 
 > candidates :: [(String, Solver)]
 > candidates = [
@@ -55,6 +69,9 @@ The [Solver](./Solver.hs) defines the interface for the contestants.
 >   ("vector-fftw", ClientVectorFFTW.solver)
 >   ]
 
+Now the Olympics begin! The array size is varied from $2^{10}$ to $2^{20}$.
+Contestants perfom the DFT-iDFT cycles either once or 101 times. By taking the difference
+of these two cycles, I hope to cancel out the constants and obtain the better measure of the FFT cost.
 
 > main :: IO ()
 > main = defaultMain $ (:[]) $ bgroup "fft" $ do
