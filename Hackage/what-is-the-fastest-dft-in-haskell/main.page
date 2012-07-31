@@ -6,7 +6,7 @@ title: What is the fastest DFT(discrete Fourier transform) in Haskell?
 Let us use [criterion](http://hackage.haskell.org/package/criterion) to compare them.
 
 > import Criterion.Main
-> 
+>
 > import Control.Applicative
 > import Control.Monad
 > import System.IO
