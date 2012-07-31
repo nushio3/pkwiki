@@ -31,6 +31,7 @@ regulations.
 >     realN :: Double
 >     realN = fromIntegral n
 
+The initial field, is a discrete hat function in the real part, and quadratic in the imaginary part.
 
 >     initVect, finalVect :: V.Vector (Complex Double)
 >     initVect = V.generate n initF
@@ -42,16 +43,20 @@ regulations.
 >            | otherwise                    = 0
 >         im = (r-y1 prob)*(r-y2 prob)
 
+In vector-fftw, you declare the plan, then construct the map over array, as follows; 
+
 >     planFwd = FFT.plan FFT.dft  n
 >     planBwd = FFT.plan FFT.idft n
-
 >     step :: V.Vector (Complex Double) -> V.Vector (Complex Double)
 >     step = FFT.execute planBwd . FFT.execute planFwd
 
-Regulation tells us to perfrom forward then backward DFT
-`probRepeat prob` times.
+Regulation tells us to perfrom the set of forward then backward DFT, for
+`(probRepeat prob)` times.
 
 >     finalVect = foldl1 (.) (replicate (probRepeat prob) step) $ initVect
+
+Then finally, contestants are to calculate the amplitudes both in the real space and the wave space, and return them.
+
 >     amp ::  V.Vector (Complex Double) -> Double
 >     amp =  V.sum . V.map ((^2) . magnitude)
 >     ans1 = amp finalVect / realN
