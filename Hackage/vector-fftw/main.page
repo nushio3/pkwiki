@@ -11,8 +11,7 @@ regulation. Our module:
 > module ClientVectorFFTW where
 
 uses
-[vector-fftw](http://hackage.haskell.org/packages/vector-fftw)
-package:
+[hackage:vector-fftw]():
 
 > import Control.Applicative
 > import qualified Numeric.FFT.Vector.Invertible as FFT
