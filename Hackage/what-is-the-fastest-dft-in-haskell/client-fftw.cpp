@@ -7,17 +7,26 @@
 
 using namespace std;
 
+const char* wisdom_filename = "fftw-cpp.wisdom";
+
 int main () {
   int wisdom_flag;
   double x1,x2,y1,y2;
   int n, iteration;
   cin >> wisdom_flag >> x1 >> x2 >> y1 >> y2 >> n >> iteration;
 
+  if (wisdom_flag) {
+    fftw_import_wisdom_from_filename(wisdom_filename);
+  }
+
   fftw_complex *fft_work_in = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * n);
   fftw_complex *fft_work_out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * n);
 
-  fftw_plan fft_plan_fwd = fftw_plan_dft_1d(n, fft_work_in, fft_work_out, FFTW_FORWARD, FFTW_ESTIMATE);
-  fftw_plan fft_plan_bwd = fftw_plan_dft_1d(n, fft_work_out, fft_work_in, FFTW_BACKWARD, FFTW_ESTIMATE);
+  unsigned flags = (wisdom_flag ? FFTW_MEASURE : FFTW_ESTIMATE);
+  fftw_plan fft_plan_fwd = fftw_plan_dft_1d(n, fft_work_in, fft_work_out, FFTW_FORWARD, flags);
+  fftw_plan fft_plan_bwd = fftw_plan_dft_1d(n, fft_work_out, fft_work_in, FFTW_BACKWARD, flags);
+
+
 
   for (int i = 0; i < n; ++i) {
     double r = (i+0.5)/n;
@@ -47,5 +56,9 @@ int main () {
     sum += pow(fft_work_out[i][0],2) + pow(fft_work_out[i][1],2);
   }
   cout << sum/n/n << endl;
+
+  if (wisdom_flag) {
+    fftw_export_wisdom_to_filename(wisdom_filename);
+  }
 
 }

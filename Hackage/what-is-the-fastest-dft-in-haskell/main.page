@@ -27,6 +27,7 @@ of the DFT part.
 Here are the contestants that provide the solvers;
 
 > import qualified ClientVectorFFTW
+> import qualified ClientFFT
 
 And here is another type of contestants that communicates via standard I/O;
 
@@ -58,31 +59,38 @@ Every contestant's result must pass the test:
 >   when (not pass) $ do
 >     hPutStr stderr $ printf
 >       "wrong answer! expected %f +- %f, got: %s"
->       expectedAns (show (ans1, ans2))
+>       expectedAns accuracy (show (ans1, ans2))
 >   return (ans1, ans2)
 
 Now here are the list of contestants:
 
-> candidates :: [(String, Solver)]
+> candidates :: [(String, Bool, Solver)]
 > candidates = [
->   ("cpp", fromExe "./client-fftw-cpp"),
->   ("vector-fftw", ClientVectorFFTW.solver)
+>   ("cpp",         True,  fromExe "./client-fftw-cpp"),
+>   ("vector-fftw", False, ClientVectorFFTW.solver),
+>   ("fft",         True,  ClientFFT.solver)
 >   ]
 
 Now the Olympics begin! The array size is varied from $2^{10}$ to $2^{20}$.
-Contestants perfom the DFT-iDFT cycles either once or 101 times. By taking the difference
-of these two cycles, I hope to cancel out the constants and obtain the better measure of the FFT cost.
+Contestants perfom the DFT-iDFT in many cycles, from once to 102 times. 
+By taking the difference of these cycles, 
+I hope to cancel out the constants to obtain
+the better estimate of the bulk FFT cost.
 
 > main :: IO ()
 > main = defaultMain $ (:[]) $ bgroup "fft" $ do
 >   n <- map (2^) [10,12..(20::Int)]
->   rep <- [1,101]
->   (tag, solver) <- candidates
+>   (tag1, isWise, solver) <- candidates
+>   wf <- if isWise then [False,True] else [False]
+>   rep <- [1,2,52,102]
 >   let prob = Problem{
->         wisdomFlag = False,
+>         wisdomFlag = wf,
 >         x1 = 1/4, x2 = 3/4,
 >         y1 = 1/3, y2 = 2/3,
 >         probSize = n, probRepeat = rep
 >       }
->   let tag2 = printf "%s %d %d" tag (probSize prob) (probRepeat prob)
+>       tag2 = printf "%s %d %d %d" 
+>              tag1 
+>              (if isWise then 1 else 0 :: Int)
+>              (probSize prob) (probRepeat prob)
 >   return $ bench tag2 $ nfIO $ quarantine solver prob
