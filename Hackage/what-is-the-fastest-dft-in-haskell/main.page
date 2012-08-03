@@ -6,8 +6,8 @@ title: What is the fastest DFT(discrete Fourier transform) in Haskell?
 Let us use [criterion](http://hackage.haskell.org/package/criterion) to compare them.
 
 > import Criterion.Main
->
 > import Control.Applicative
+> import Control.DeepSeq (deepseq)
 > import Control.Monad
 > import System.IO
 > import System.Process
@@ -31,6 +31,7 @@ Here are the contestants that provide the solvers;
 > import qualified ContestantRepa
 > import qualified ContestantVectorFFTW
 
+
 And here is another type of contestants that communicates via standard I/O;
 
 > fromExe :: FilePath -> Solver
@@ -43,6 +44,8 @@ And here is another type of contestants that communicates via standard I/O;
 >     (probSize prob) (probRepeat prob)
 >   hClose hin
 >   (ans1: ans2: _) <- map read . words <$> hGetContents hout
+>   (ans1, ans2) `deepseq` hClose hout
+>   _ <- waitForProcess pid
 >   return (ans1, ans2)
 
 Every contestant's result must pass the test:
@@ -72,7 +75,7 @@ Now here are the list of contestants:
 >   ("fft"        , True , 20, ContestantFFT.solver),
 >   ("vector-fftw", False, 20, ContestantVectorFFTW.solver),
 >   ("repa"       , False, 14, ContestantRepa.solver),
->   ("pure-fft"   , False, 14, ContestantPureFFT.solver)
+>   ("pure-fft"   , False, 12, ContestantPureFFT.solver)
 >   ]
 
 Now the Olympics begin! The array size is varied from $2^{10}$ to $2^{20}$.
@@ -86,8 +89,8 @@ the better estimate of the bulk FFT cost.
 >   n <- map (2^) [10,12..(20::Int)]
 >   (tag1, isWise, ulim, solver) <- candidates
 >   wf <- if isWise then [False,True] else [False]
->   if n > 2^ulim then [{-Banana-}] else [[{-Pierre on the rope-}]]
->   rep <- [1,2,52,102]
+>   guard (n <= 2^ulim)
+>   rep <- [1,2,15,52,102]
 >   let prob = Problem{
 >         wisdomFlag = wf,
 >         x1 = 1/4, x2 = 3/4,
