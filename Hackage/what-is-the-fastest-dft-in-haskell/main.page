@@ -66,13 +66,13 @@ Every contestant's result must pass the test:
 
 Now here are the list of contestants:
 
-> candidates :: [(String, Bool, Solver)]
+> candidates :: [(String, Bool, Int, Solver)]
 > candidates = [
->   ("fft"        , True , ContestantFFT.solver),
->   ("pure-fft"   , False, ContestantPureFFT.solver),
->   ("repa"       , False, ContestantRepa.solver),
->   ("vector-fftw", False, ContestantVectorFFTW.solver),
->   ("cpp"        , True , fromExe "./client-fftw-cpp")
+>   ("cpp"        , True , 20, fromExe "./client-fftw-cpp"),
+>   ("fft"        , True , 20, ContestantFFT.solver),
+>   ("vector-fftw", False, 20, ContestantVectorFFTW.solver),
+>   ("repa"       , False, 14, ContestantRepa.solver),
+>   ("pure-fft"   , False, 14, ContestantPureFFT.solver)
 >   ]
 
 Now the Olympics begin! The array size is varied from $2^{10}$ to $2^{20}$.
@@ -84,8 +84,9 @@ the better estimate of the bulk FFT cost.
 > main :: IO ()
 > main = defaultMain $ (:[]) $ bgroup "fft" $ do
 >   n <- map (2^) [10,12..(20::Int)]
->   (tag1, isWise, solver) <- candidates
+>   (tag1, isWise, ulim, solver) <- candidates
 >   wf <- if isWise then [False,True] else [False]
+>   if n > 2^ulim then [{-Banana-}] else [[{-Pierre on the rope-}]]
 >   rep <- [1,2,52,102]
 >   let prob = Problem{
 >         wisdomFlag = wf,
@@ -95,6 +96,6 @@ the better estimate of the bulk FFT cost.
 >       }
 >       tag2 = printf "%s %d %d %d"
 >              tag1
->              (if isWise then 1 else 0 :: Int)
+>              (if wf then 1 else 0 :: Int)
 >              (probSize prob) (probRepeat prob)
 >   return $ bench tag2 $ nfIO $ quarantine solver prob
