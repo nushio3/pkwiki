@@ -82,4 +82,4 @@ Then finally, contestants are to calculate the amplitudes both in the real space
 >     amp :: A.CArray Int (Complex Double) -> Double
 >     amp =  (^2) . A.norm2
 >     ans1 = amp initVect / realN
->     ans2 = amp (FFT.dft $ initVect) / realN^2
+>     ans2 = amp (fwd $ initVect) / realN^2
