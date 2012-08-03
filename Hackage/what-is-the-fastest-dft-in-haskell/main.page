@@ -26,9 +26,10 @@ of the DFT part.
 
 Here are the contestants that provide the solvers;
 
-> import qualified ClientVectorFFTW
-> import qualified ClientFFT
-> import qualified ClientPureFFT
+> import qualified ContestantFFT
+> import qualified ContestantPureFFT
+> import qualified ContestantRepa
+> import qualified ContestantVectorFFTW
 
 And here is another type of contestants that communicates via standard I/O;
 
@@ -67,9 +68,10 @@ Now here are the list of contestants:
 
 > candidates :: [(String, Bool, Solver)]
 > candidates = [
->   ("pure-fft"   , False, ClientPureFFT.solver),
->   ("fft"        , True , ClientFFT.solver),
->   ("vector-fftw", False, ClientVectorFFTW.solver),
+>   ("fft"        , True , ContestantFFT.solver),
+>   ("pure-fft"   , False, ContestantPureFFT.solver),
+>   ("repa"       , False, ContestantRepa.solver),
+>   ("vector-fftw", False, ContestantVectorFFTW.solver),
 >   ("cpp"        , True , fromExe "./client-fftw-cpp")
 >   ]
 

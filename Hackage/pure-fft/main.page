@@ -8,7 +8,7 @@ This is a DFT solver that conforms to
 regulation. Our module:
 
 > {-# OPTIONS -Wall #-}
-> module ClientFFT where
+> module ContestantPureFFT where
 
 uses [hackage:pure-fft]():
 
@@ -24,7 +24,7 @@ complex numbers:
 
 > type Array = [Complex Double]
 
-
+According to the regulation, contestants should set up an initial field whose real part is discontinuous hat function, and the imaginary part a quadratic function.
 
 > solver :: Solver
 > solver prob = return (ans1,ans2)
@@ -49,7 +49,7 @@ complex numbers:
 >     fwd = FFT.fft
 >     bwd = FFT.ifft
 >     step :: Array -> Array
->     step = A.amap (/(realN*realN :+ 0)) . bwd . fwd
+>     step = bwd . fwd
 
 Regulation tells us to perfrom the set of forward then backward DFT, for
 `(probRepeat prob)` times.
@@ -59,6 +59,6 @@ Regulation tells us to perfrom the set of forward then backward DFT, for
 Then finally, contestants are to calculate the amplitudes both in the real space and the wave space, and return them.
 
 >     amp :: Array -> Double
->     amp =  sum $ map ((^2) . magnitude) 
->     ans1 = amp initVect / realN
->     ans2 = amp (fwd $ initVect) / realN^2
+>     amp =  sum . map ((^2) . magnitude) 
+>     ans1 = amp finalVect / realN
+>     ans2 = amp (fwd $ finalVect) / realN^2

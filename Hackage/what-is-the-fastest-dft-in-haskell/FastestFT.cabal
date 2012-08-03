@@ -16,8 +16,8 @@ cabal-version:       >=1.8
 
 executable judge
   main-is: main.lhs            
-  other-modules: ClientVectorFFTW, ClientFFT, Solver
-  build-depends:   base, carray, criterion, deepseq, fft, 
-                   process, pure-fft, repa-algorithms,
-                   unix, vector-fftw, vector
+  other-modules: Solver
+  build-depends: base, carray, criterion, deepseq, fft, 
+                 process, pure-fft, repa, repa-algorithms,
+                 unix, vector-fftw, vector
                    		   

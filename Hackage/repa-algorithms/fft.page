@@ -8,57 +8,64 @@ This is a DFT solver that conforms to
 regulation. Our module:
 
 > {-# OPTIONS -Wall #-}
-> module ClientPureFFT where
+> module ContestantRepa where
 
 uses FFT from [hackage:repa-algorithms]():
 
-> import Debug.Trace
-> import Control.Applicative
 > import Control.Monad
-> import qualified Numeric.FFT as FFT
-> import Data.Complex
+> import qualified Data.Array.Repa as R
+> import Data.Array.Repa (Z(..), (:.)(..))
+> import qualified Data.Array.Repa.Algorithms.FFT as FFT
+> import Data.Array.Repa.Algorithms.Complex 
 > import Solver
 
-For FFT provided by [hackage:pure-fft](), the arrays are simply the list of
-complex numbers:
+The [hackage:repa]() provides multiple array formats. Of which let us use
+the unboxed vectors. [hackage:repa-algorithms]() defines its own `Complex`
+type, which is not a type constructor but a tuple of `Double`s .
 
-> type Array = [Complex Double]
+> type Array = R.Array R.U R.DIM1 Complex
 
-According to the regulation, contestants should set up an initial field whose real part is discontinuous hat function, and the imaginary part a quadratic function.
+In contrast to most of FFT libraries we have dealt with so far, 
+[hackage:repa]() does not operate on pure arrays but
+operates on arrays in monads.
+
+So, the definition of the initial field remains a pure function:
 
 > solver :: Solver
-> solver prob = return (ans1,ans2)
->   where
+> solver prob = do
+>   let
 >     n :: Int
 >     n = probSize prob
 >     realN :: Double
 >     realN = fromIntegral n
->     initVect, finalVect :: Array
->     initVect = map initF [0..n-1]
->     initF :: Int -> Complex Double
->     initF i = re :+ im
+>     initF :: Int -> Complex
+>     initF i = (re, im)
 >       where
 >         r = (fromIntegral i + 0.5) / realN
 >         re | (x1 prob < r && r < x2 prob) = 1
 >            | otherwise                    = 0
 >         im = (r-y1 prob)*(r-y2 prob)
 
-[hackage:pure-fft] provides the direct access to fft, but the length of the input list must be a power of two.
+But the construction of the initial array is a monadic operation.
 
->     fwd, bwd :: Array -> Array
->     fwd = FFT.fft
->     bwd = FFT.ifft
->     step :: Array -> Array
->     step = bwd . fwd
+>   initVect <- R.computeP $ R.fromFunction (Z :. n) (\(Z :. i) -> initF i)
 
-Regulation tells us to perfrom the set of forward then backward DFT, for
-`(probRepeat prob)` times.
+Also, forward and inverse FFTs are monad, so is the each step of the iteration
+as well as its repeatition for `(probRepeat prob)` times.
 
->     finalVect = foldl1 (.) (replicate (probRepeat prob) step) $ initVect
+>   let
+>     fwd, bwd, step :: Monad m => Array -> m Array
+>     fwd = FFT.fft1dP FFT.Forward
+>     bwd = FFT.fft1dP FFT.Inverse
+>     step = fwd >=> bwd
+>   finalVect <- foldl1 (>=>) (replicate (probRepeat prob) step) $ initVect
 
 Then finally, contestants are to calculate the amplitudes both in the real space and the wave space, and return them.
 
->     amp :: Array -> Double
->     amp =  sum . map ((^2) . magnitude)
->     ans1 = amp initVect / realN
->     ans2 = amp (fwd $ initVect) / realN^2
+>   let
+>     amp :: Monad m => Array -> m Double
+>     amp =  R.sumAllP . R.map ((^2) . mag)
+>   ans1 <- amp finalVect 
+>   ans2 <- amp =<< fwd finalVect
+
+>   return (ans1 / realN, ans2 / realN^2)   

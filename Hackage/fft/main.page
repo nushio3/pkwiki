@@ -8,7 +8,7 @@ This is a DFT solver that conforms to
 regulation. Our module:
 
 > {-# OPTIONS -Wall #-}
-> module ClientFFT where
+> module ContestantFFT where
 
 uses [hackage:fft]():
 
@@ -51,7 +51,7 @@ The setup for initial Field is the same.
 >     n = probSize prob
 >     realN :: Double
 >     realN = fromIntegral n
->     initVect, finalVect :: A.CArray Int (Complex Double)
+>     initVect, finalVect :: Array
 >     initVect = A.listArray (0,n-1) $ map initF [0..n-1]
 >     initF :: Int -> Complex Double
 >     initF i = re :+ im
@@ -79,7 +79,7 @@ Regulation tells us to perfrom the set of forward then backward DFT, for
 Then finally, contestants are to calculate the amplitudes both in the real space and the wave space, and return them.
 
 
->     amp :: A.CArray Int (Complex Double) -> Double
+>     amp :: Array -> Double
 >     amp =  (^2) . A.norm2
 >     ans1 = amp initVect / realN
 >     ans2 = amp (fwd $ initVect) / realN^2

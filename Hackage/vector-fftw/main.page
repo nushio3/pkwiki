@@ -8,7 +8,7 @@ This is a DFT solver that conforms to
 regulation. Our module:
 
 > {-# OPTIONS -Wall #-}
-> module ClientVectorFFTW where
+> module ContestantVectorFFTW where
 
 uses
 [hackage:vector-fftw]():
