@@ -18,6 +18,6 @@ executable judge
   main-is: main.lhs            
   other-modules: ClientVectorFFTW, ClientFFT, Solver
   build-depends:   base, carray, criterion, deepseq, fft, 
-                   process, 
+                   process, pure-fft, repa-algorithms,
                    unix, vector-fftw, vector
                    		   

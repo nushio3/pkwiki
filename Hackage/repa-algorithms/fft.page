@@ -1,0 +1,64 @@
+---
+format: markdown+lhs
+title: vector-fftw entry to fft contest
+...
+
+This is a DFT solver that conforms to
+[DFT contest](../what-is-the-fastest-dft-in-haskell/main)
+regulation. Our module:
+
+> {-# OPTIONS -Wall #-}
+> module ClientPureFFT where
+
+uses FFT from [hackage:repa-algorithms]():
+
+> import Debug.Trace
+> import Control.Applicative
+> import Control.Monad
+> import qualified Numeric.FFT as FFT
+> import Data.Complex
+> import Solver
+
+For FFT provided by [hackage:pure-fft](), the arrays are simply the list of
+complex numbers:
+
+> type Array = [Complex Double]
+
+According to the regulation, contestants should set up an initial field whose real part is discontinuous hat function, and the imaginary part a quadratic function.
+
+> solver :: Solver
+> solver prob = return (ans1,ans2)
+>   where
+>     n :: Int
+>     n = probSize prob
+>     realN :: Double
+>     realN = fromIntegral n
+>     initVect, finalVect :: Array
+>     initVect = map initF [0..n-1]
+>     initF :: Int -> Complex Double
+>     initF i = re :+ im
+>       where
+>         r = (fromIntegral i + 0.5) / realN
+>         re | (x1 prob < r && r < x2 prob) = 1
+>            | otherwise                    = 0
+>         im = (r-y1 prob)*(r-y2 prob)
+
+[hackage:pure-fft] provides the direct access to fft, but the length of the input list must be a power of two.
+
+>     fwd, bwd :: Array -> Array
+>     fwd = FFT.fft
+>     bwd = FFT.ifft
+>     step :: Array -> Array
+>     step = bwd . fwd
+
+Regulation tells us to perfrom the set of forward then backward DFT, for
+`(probRepeat prob)` times.
+
+>     finalVect = foldl1 (.) (replicate (probRepeat prob) step) $ initVect
+
+Then finally, contestants are to calculate the amplitudes both in the real space and the wave space, and return them.
+
+>     amp :: Array -> Double
+>     amp =  sum . map ((^2) . magnitude)
+>     ans1 = amp initVect / realN
+>     ans2 = amp (fwd $ initVect) / realN^2
