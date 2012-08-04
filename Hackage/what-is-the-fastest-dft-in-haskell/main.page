@@ -74,7 +74,7 @@ Now here are the list of contestants:
 >   ("cpp"        , True , 20, fromExe "./client-fftw-cpp"),
 >   ("fft"        , True , 20, ContestantFFT.solver),
 >   ("vector-fftw", False, 20, ContestantVectorFFTW.solver),
->   ("repa"       , False, 14, ContestantRepa.solver),
+>   ("repa"       , False, 12, ContestantRepa.solver),
 >   ("pure-fft"   , False, 12, ContestantPureFFT.solver)
 >   ]
 
@@ -86,8 +86,9 @@ the better estimate of the bulk FFT cost.
 
 > main :: IO ()
 > main = defaultMain $ (:[]) $ bgroup "fft" $ do
->   n <- map (2^) [10,12..(20::Int)]
+>   --n <- map (2^) [10,12..(20::Int)]
 >   (tag1, isWise, ulim, solver) <- candidates
+>   n <- map (2^) [ulim]
 >   wf <- if isWise then [False,True] else [False]
 >   guard (n <= 2^ulim)
 >   rep <- [1,2,15,52,102]

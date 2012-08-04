@@ -69,7 +69,7 @@ In [hackage:fft], we can define forward and inverse DFT via `dftGU`.
 >     fwd = FFT.dftGU FFT.DFTForward fftflag [0]
 >     bwd = FFT.dftGU FFT.DFTBackward fftflag [0]
 >     step :: Array -> Array
->     step = A.amap (/(realN*realN :+ 0)) . bwd . fwd
+>     step = A.amap (/(realN :+ 0)) . bwd . fwd
 
 Regulation tells us to perfrom the set of forward then backward DFT, for
 `(probRepeat prob)` times.
@@ -81,5 +81,5 @@ Then finally, contestants are to calculate the amplitudes both in the real space
 
 >     amp :: Array -> Double
 >     amp =  (^2) . A.norm2
->     ans1 = amp initVect / realN
->     ans2 = amp (fwd $ initVect) / realN^2
+>     ans1 = amp finalVect / realN
+>     ans2 = amp (fwd $ finalVect) / realN^2
