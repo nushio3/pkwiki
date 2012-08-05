@@ -3,7 +3,9 @@ format: markdown+lhs
 title: What is the fastest DFT(discrete Fourier transform) in Haskell?
 ...
 
-Let us use [criterion](http://hackage.haskell.org/package/criterion) to compare them.
+To begin with, I have performed some preliminary benchmark experiments; here are the results: [bench-onlymax.html]() . For the rest of this article, I'll explain how I have benchmarked them. The benchmarks are under development and comments are welcome!
+
+I have used [hackage:criterion]() to compare them.
 
 > import Criterion.Main
 > import Control.Applicative
