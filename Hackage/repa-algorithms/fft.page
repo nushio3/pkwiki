@@ -1,6 +1,6 @@
 ---
 format: markdown+lhs
-title: vector-fftw entry to fft contest
+title: repa entry to fft contest
 ...
 
 This is a DFT solver that conforms to
