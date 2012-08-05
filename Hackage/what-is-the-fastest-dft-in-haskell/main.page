@@ -2,7 +2,7 @@
 format: markdown+lhs
 title: What is the fastest DFT(discrete Fourier transform) in Haskell?
 ...
-
+# Summary
 To begin with, I have performed some preliminary benchmark experiments; [here are the results](http://paraiso-lang.org/html/bench-dft-in-haskell.html) Each line in the benchmark results has four labels `name wisdom size repeat`, where `name` is the name of the contestant, `wisdom` is the flag whether wisdom is used, `size` is the DFT array size and `repeat` is proportional to how many times the DFT is performed. I have compared:
 
 * The one that calles fftw from C-code: [client-fftw.cpp]()
@@ -12,6 +12,7 @@ To begin with, I have performed some preliminary benchmark experiments; [here ar
 * The one based on high performance, regular, multi-dimensional, shape polymorphic parallel arrays [hackage:repa](): [../repa-algorithms/fft]()
 
 
+# The Method
 For the rest of this article, I'll explain how I have benchmarked them. The benchmarks are under development and comments are welcome!
 
 I have used [hackage:criterion]() to compare them.
