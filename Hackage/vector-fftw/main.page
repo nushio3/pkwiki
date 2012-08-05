@@ -15,6 +15,7 @@ uses
 
 > import Control.Applicative
 > import qualified Numeric.FFT.Vector.Invertible as FFT
+> import qualified Numeric.FFT.Vector.Plan as FFT
 > import qualified Data.Vector.Unboxed as V
 > import Data.Complex
 
@@ -42,10 +43,12 @@ The initial field, is a discrete hat function in the real part, and quadratic in
 >            | otherwise                    = 0
 >         im = (r-y1 prob)*(r-y2 prob)
 
-In vector-fftw, you declare the plan, then construct the map over array, as follows; 
+In vector-fftw, you declare the plan, then construct the map over array, as follows. [hackage:vector-fftw]() accepts the option for FFTW planning rigor flags,
 
->     planFwd = FFT.plan FFT.dft  n
->     planBwd = FFT.plan FFT.idft n
+>     pt :: FFT.PlanType
+>     pt = if wisdomFlag prob then FFT.Measure else FFT.Estimate
+>     planFwd = FFT.planOfType pt FFT.dft  n
+>     planBwd = FFT.planOfType pt FFT.idft n
 >     step :: V.Vector (Complex Double) -> V.Vector (Complex Double)
 >     step = FFT.execute planBwd . FFT.execute planFwd
 
