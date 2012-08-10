@@ -4,12 +4,62 @@ title: Automatic Differentiation
 ...
 
 [hackage:ad]はHaskellによる自動微分の実装です。まずは使ってみましょう。
+インポートします。
 
+> {-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 > import Numeric.AD
-
-でインポートします。
-
-> >>> diff (\x -> x^3) 10
-> 300
+> import Text.Printf
 
 
+
+> -- | test 1. simple derivatives
+> --
+> -- >>> diff (\x -> x^4) 10
+> -- 4000
+> -- >>> diff (diff (\x -> x^4)) 10
+> -- 1200
+> -- >>> diff (diff (diff (\x -> x^4))) 10
+> -- 240
+
+> -- | test 2. quasi quickcheck.
+> --
+> -- >>> all (==0) $ map (\x -> (diff sin) x - cos x) [0..10]
+> -- True
+
+> newtype Expr = Expr String deriving (Eq, Show)
+> instance Num Expr where
+>   (Expr a) + (Expr b) = Expr $ printf "(%s+%s)" a b
+>   (Expr a) - (Expr b) = Expr $ printf "(%s-%s)" a b
+>   (Expr a) * (Expr b) = Expr $ printf "(%s*%s)" a b
+>   fromInteger = Expr . show
+
+> f :: Num a => a -> a
+> f x = x^3 + 42*x + 1
+
+> -- | test 3. symbolic differentiation.
+> --
+> -- >>> diff f $ Expr "x"
+> -- Expr "(((x*((x*1)+(1*x)))+(1*(x*x)))+(1*42))"
+
+
+> zipWithLonger :: Num a => (a->a->a) -> [a] -> [a] -> [a]
+> zipWithLonger op xs ys = take n $ zipWith op xs' ys'
+>   where
+>     n = length xs `max` length ys
+>     xs' = xs ++ repeat 0
+>     ys' = ys ++ repeat 0
+
+> instance (Num a) => Num [a] where
+>   (+) = zipWithLonger (+)
+>   (-) = zipWithLonger (-)
+>   [] * ys = 0
+>   (x:xs) * ys = map (*x) ys + (0:) (xs * ys)
+>   fromInteger = (:[]) . fromInteger
+
+
+> -- | test 4. differentiate power series.
+> --
+> -- >>> diff f [0,1]
+> -- [42,0,3,0]
+
+> main = undefined
