@@ -3,14 +3,19 @@ format: markdown+lhs
 title: Automatic Differentiation
 ...
 
-[hackage:ad]はHaskellによる自動微分の実装です。まずは使ってみましょう。
-インポートします。
+[hackage:ad]()はHaskellによる自動微分の実装です。さっそく使ってみましょう。
+まずは必要なライブラリをインポートします。
+
+[hackage:ad]() is a Haskell implementation for automatic differentiation. Lets try it.
 
 > {-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 > import Numeric.AD
 > import Text.Printf
+> -- import qualified MathObj.Polynomial as P
 
+次のように、関数のある点における微係数を求めることができます。
 
+A few calculation of derivatives at given points.
 
 > -- | test 1. simple derivatives
 > --
@@ -21,10 +26,18 @@ title: Automatic Differentiation
 > -- >>> diff (diff (diff (\x -> x^4))) 10
 > -- 240
 
+ちょっと荒っぽいですが、以下のように$\frac{d\sin x}{dx}=\cos x$のような計算ができていることもテストできます。
+
+Here's a quick test for $\frac{d\sin x}{dx}=\cos x$ .
+
 > -- | test 2. quasi quickcheck.
 > --
-> -- >>> all (==0) $ map (\x -> (diff sin) x - cos x) [0..10]
+> -- >>> all (==0) $ map (\x -> (diff sin) x - cos x) [0..100]
 > -- True
+
+自動微分の中身はどうなっているのでしょう。構文木を作るのはめどいので簡単なものをでっちあげます。
+
+Let's investigate the inside of automated differentiation by passing it a mock syntax tree.
 
 > newtype Expr = Expr String deriving (Eq, Show)
 > instance Num Expr where
@@ -33,21 +46,25 @@ title: Automatic Differentiation
 >   (Expr a) * (Expr b) = Expr $ printf "(%s*%s)" a b
 >   fromInteger = Expr . show
 
+次のような関数を微分させてみます。
+
 > f :: Num a => a -> a
 > f x = x^3 + 42*x + 1
+
+結果はかなり冗長なものになります。実用に供するにはこの後に最適化が欲しそうです。
+
+Hmm, I'll need some optimization after this.
 
 > -- | test 3. symbolic differentiation.
 > --
 > -- >>> diff f $ Expr "x"
 > -- Expr "(((x*((x*1)+(1*x)))+(1*(x*x)))+(1*42))"
 
+初めから多項式しか登場しないと分かっているなら、多項式の係数のみを管理することで効率化がはかれます。
+[hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)では動かなくなってるので
+またしてもアドホックに作ってしまいましょう。
 
-> zipWithLonger :: Num a => (a->a->a) -> [a] -> [a] -> [a]
-> zipWithLonger op xs ys = take n $ zipWith op xs' ys'
->   where
->     n = length xs `max` length ys
->     xs' = xs ++ repeat 0
->     ys' = ys ++ repeat 0
+It'd be easy to perform such optimization of terms if we deal with only polynomials. Actually, there's an implementation of polynomial in [hackage:numeric-prelude]() but it doesn't work (at version 0.3.0.2). So let's create something polynomial again:
 
 > instance (Num a) => Num [a] where
 >   (+) = zipWithLonger (+)
@@ -56,6 +73,16 @@ title: Automatic Differentiation
 >   (x:xs) * ys = map (*x) ys + (0:) (xs * ys)
 >   fromInteger = (:[]) . fromInteger
 
+> zipWithLonger :: Num a => (a->a->a) -> [a] -> [a] -> [a]
+> zipWithLonger op xs ys = take n $ zipWith op xs' ys'
+>   where
+>     n = length xs `max` length ys
+>     xs' = xs ++ repeat 0
+>     ys' = ys ++ repeat 0
+
+これで、それらしき微分ができます。
+
+Then we get the coefficients for $\frac{df}{dx}$ (with some trailing zeros.)
 
 > -- | test 4. differentiate power series.
 > --
