@@ -73,9 +73,9 @@ Now here are the list of contestants:
 
 > candidates :: [(String, Bool, Int, Solver)]
 > candidates = [
->   ("cpp"        , True , 20, fromExe "./client-fftw-cpp"),
->   ("fft"        , True , 20, ContestantFFT.solver),
->   ("vector-fftw", True , 20, ContestantVectorFFTW.solver),
+>   ("cpp"        , True , 22, fromExe "./client-fftw-cpp"),
+>   ("fft"        , True , 22, ContestantFFT.solver),
+>   ("vector-fftw", True , 22, ContestantVectorFFTW.solver),
 >   ("repa"       , False, 12, ContestantRepa.solver),
 >   ("pure-fft"   , False, 12, ContestantPureFFT.solver)
 >   ]
@@ -88,10 +88,10 @@ the better estimate of the bulk FFT cost.
 
 > main :: IO ()
 > main = defaultMain $ (:[]) $ bgroup "fft" $ do
->   --n <- map (2^) [10,12..(20::Int)]
+>   n <- map (2^) [10,11..(22::Int)]
 >   (tag1, isWise, ulim, solver) <- candidates
 >   wf <- if isWise then [False,True] else [False]
->   n <- map (2^) [ulim] -- perform only the heaviest benchmarks
+>   --n <- map (2^) [ulim] -- perform only the heaviest benchmarks
 >   guard (n <= 2^ulim)
 >   rep <- [1,2,15,52,102]
 >   let prob = Problem{
