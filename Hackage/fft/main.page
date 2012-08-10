@@ -1,6 +1,6 @@
 ---
 format: markdown+lhs
-title: vector-fftw entry to fft contest
+title: fft entry to fft contest
 ...
 
 This is a DFT solver that conforms to
@@ -31,7 +31,7 @@ For FFT provided by [hackage:fft]() module, the Fields are of type `CArray`.
 > solver :: Solver
 > solver prob = do
 
-[hackage:fft] can manage the FFTW wisdom (automated tuning results).
+[hackage:fft]() can manage the FFTW wisdom (automated tuning results).
 So, we will re-use the wisdom whenever it is available.
 
 >   let wisdomFilename = "fft.wisdom"
