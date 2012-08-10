@@ -13,6 +13,10 @@ title: Automatic Differentiation
 > import Text.Printf
 > -- import qualified MathObj.Polynomial as P
 
+
+# 数値微分
+# Numerical Differentiation
+
 次のように、関数のある点における微係数を求めることができます。
 
 A few calculation of derivatives at given points.
@@ -34,6 +38,9 @@ Here's a quick test for $\frac{d}{dx}\sin x=\cos x$ .
 > --
 > -- >>> all (==0) $ map (\x -> (diff sin) x - cos x) [0..100]
 > -- True
+
+# 式構造の微分
+# Differenting expression
 
 自動微分の中身はどうなっているのでしょう。構文木を作るのはめどいので簡単なものをでっちあげます。
 
@@ -59,6 +66,9 @@ Hmm, I'll need some optimization after this.
 > --
 > -- >>> diff f $ Expr "x"
 > -- Expr "(((x*((x*1)+(1*x)))+(1*(x*x)))+(1*42))"
+
+# 多項式の微分
+# Differentiating Polynominals
 
 初めから多項式しか登場しないと分かっているなら、多項式の係数のみを管理することで効率化がはかれます。
 [hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)では動かなくなってるので
