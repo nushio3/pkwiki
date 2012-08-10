@@ -1,0 +1,15 @@
+---
+format: markdown+lhs
+title: Automatic Differentiation
+...
+
+[hackage:ad]はHaskellによる自動微分の実装です。まずは使ってみましょう。
+
+> import Numeric.AD
+
+でインポートします。
+
+> >>> diff (\x -> x^3) 10
+> 300
+
+
