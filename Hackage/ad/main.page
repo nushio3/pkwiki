@@ -9,13 +9,18 @@ title: Automatic Differentiation
 [hackage:ad]() is a Haskell implementation for automatic differentiation. Lets try it.
 
 > {-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
-> import Numeric.AD
-> import Text.Printf
-> -- import qualified MathObj.Polynomial as P
+> import           Numeric.AD
+> import qualified Algebra.Additive as Additive
+> import qualified Algebra.Ring as Ring
+> import qualified MathObj.Polynomial as MOP
+> import qualified NumericPrelude as NP
+> import           Text.Printf
 
+数値微分
+=======
 
-# 数値微分
-# Numerical Differentiation
+Numerical Differentiation
+=========================
 
 次のように、関数のある点における微係数を求めることができます。
 
@@ -39,8 +44,11 @@ Here's a quick test for $\frac{d}{dx}\sin x=\cos x$ .
 > -- >>> all (==0) $ map (\x -> (diff sin) x - cos x) [0..100]
 > -- True
 
-# 式構造の微分
-# Differenting expression
+式構造の微分
+==========
+
+Differenting expression
+=======================
 
 自動微分の中身はどうなっているのでしょう。構文木を作るのはめどいので簡単なものをでっちあげます。
 
@@ -52,6 +60,8 @@ Let's investigate the inside of automated differentiation by passing it a mock s
 >   (Expr a) - (Expr b) = Expr $ printf "(%s-%s)" a b
 >   (Expr a) * (Expr b) = Expr $ printf "(%s*%s)" a b
 >   fromInteger = Expr . show
+>   abs = undefined
+>   signum = undefined
 
 次のような関数を微分させてみます。
 
@@ -67,14 +77,17 @@ Hmm, I'll need some optimization after this.
 > -- >>> diff f $ Expr "x"
 > -- Expr "(((x*((x*1)+(1*x)))+(1*(x*x)))+(1*42))"
 
-# 多項式の微分
-# Differentiating Polynominals
+多項式の微分
+==========
+
+Differentiating Polynominals
+============================
 
 初めから多項式しか登場しないと分かっているなら、多項式の係数のみを管理することで効率化がはかれます。
-[hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)では動かなくなってるので
+[hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)ではPrelude `Num`動かなくなってるので
 またしてもアドホックに作ってしまいましょう。
 
-It'd be easy to perform such optimization of terms if we deal with only polynomials. Actually, there's an implementation of polynomial in [hackage:numeric-prelude]() but it doesn't work (at version 0.3.0.2). So let's create something polynomial again:
+It'd be easy to perform such optimization of terms if we deal with only polynomials. Actually, there's an implementation of polynomial in [hackage:numeric-prelude]() but it doesn't work with Prelude's `Num` class (at version 0.3.0.2). So let's create something polynomial again:
 
 > instance (Num a) => Num [a] where
 >   (+) = zipWithLonger (+)
@@ -82,6 +95,8 @@ It'd be easy to perform such optimization of terms if we deal with only polynomi
 >   [] * ys = 0
 >   (x:xs) * ys = map (*x) ys + (0:) (xs * ys)
 >   fromInteger = (:[]) . fromInteger
+>   abs = undefined
+>   signum = undefined
 
 > zipWithLonger :: Num a => (a->a->a) -> [a] -> [a] -> [a]
 > zipWithLonger op xs ys = take n $ zipWith op xs' ys'
@@ -98,5 +113,26 @@ Then we get the coefficients for $\frac{df}{dx}$ (with some trailing zeros.)
 > --
 > -- >>> diff f [0,1]
 > -- [42,0,3,0]
+
+> newtype Poly a = Poly {runPoly :: MOP.T a}
+
+> instance (Additive.C a, Ring.C a) => Num (Poly a) where
+>   (Poly a) + (Poly b)= Poly $ a NP.+ b
+>   (Poly a) - (Poly b)= Poly $ a NP.- b
+>   (Poly a) * (Poly b)= Poly $ a NP.* b
+>   negate (Poly a) = Poly (NP.negate a)
+>   fromInteger = Poly . NP.fromInteger
+
+
+> x :: Poly Int
+> x = Poly $ MOP.fromCoeffs [0,1]
+> showP :: Poly Int -> String
+> showP = ($"") . MOP.showsExpressionPrec 0 "x" . runPoly
+
+> -- | test 5. Differentiate MathObj.Polynomial
+> -- >>> putStr $ showP $ f x
+> -- 1 + 42*x + 1*x^3
+> -- >>> putStr $ showP $ diff f x
+> -- 42 + 3*x^2
 
 > main = undefined
