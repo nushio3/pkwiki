@@ -84,10 +84,9 @@ Differentiating Polynominals
 ============================
 
 初めから多項式しか登場しないと分かっているなら、多項式の係数のみを管理することで効率化がはかれます。
-[hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)ではPrelude `Num`動かなくなってるので
-またしてもアドホックに作ってしまいましょう。
+[hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)ではPreludeの`Num`と一緒には動かないため、そのままでは自動微分に食わせられません。またしてもアドホックに作ってしまいましょう。
 
-It'd be easy to perform such optimization of terms if we deal with only polynomials. Actually, there's an implementation of polynomial in [hackage:numeric-prelude]() but it doesn't work with Prelude's `Num` class (at version 0.3.0.2). So let's create something polynomial again:
+It'd be easy to perform such optimization of terms if we deal with only polynomials. Actually, there's an implementation of polynomial in [hackage:numeric-prelude]() but it doesn't work with Prelude's `Num` class (at version 0.3.0.2), so we can't feed them to AD as they are. One solution is to create our own polynomial:
 
 > instance (Num a) => Num [a] where
 >   (+) = zipWithLonger (+)
@@ -114,6 +113,10 @@ Then we get the coefficients for $\frac{df}{dx}$ (with some trailing zeros.)
 > -- >>> diff f [0,1]
 > -- [42,0,3,0]
 
+A more elegant solution is to wrap the Polynomial in the `newtype` and write a Num instance for the wrapped type.
+
+もう少しましな解法としては、[hackage:numeric-prelude]()の多項式を`newtype`に包んでから`Num`のインスタンスを宣言することが挙げられます。
+
 > newtype Poly a = Poly {runPoly :: MOP.T a}
 
 > instance (Additive.C a, Ring.C a) => Num (Poly a) where
@@ -123,11 +126,18 @@ Then we get the coefficients for $\frac{df}{dx}$ (with some trailing zeros.)
 >   negate (Poly a) = Poly (NP.negate a)
 >   fromInteger = Poly . NP.fromInteger
 
+表示するための関数も作ります。
+
+Functions for printing.
 
 > x :: Poly Int
 > x = Poly $ MOP.fromCoeffs [0,1]
 > showP :: Poly Int -> String
 > showP = ($"") . MOP.showsExpressionPrec 0 "x" . runPoly
+
+これでかっこよく微分ができるようになりました。
+
+Cool differentiations.
 
 > -- | test 5. Differentiate MathObj.Polynomial
 > -- >>> putStr $ showP $ f x
