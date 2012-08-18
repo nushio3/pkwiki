@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, StandaloneDeriving #-}
 import Numeric.AD
-import Numeric.AD.Newton
+import ConjugateGradient (gradientDescent)
 import Data.Tensor.TypeLevel
 import Data.List (intercalate)
 import Control.Monad
