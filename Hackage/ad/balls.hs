@@ -23,7 +23,7 @@ potential :: (Fractional a) => Pt a -> a
 potential = vanDerWaals . F.sum . fmap (^2)
 
 well :: (Fractional a) => Pt a -> a
-well = (1e-4 *) . F.sum . fmap (^2)
+well = (\r2 -> (r2-1)^2) . F.sum . fmap (^2)
 
 bindingEnergy :: (Fractional a) => Molecule a -> a
 bindingEnergy (Molecule xs) = global + interaction

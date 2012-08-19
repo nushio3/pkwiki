@@ -46,7 +46,7 @@ gradientDescent f x0 = go x0 r0 d0
     r0 = d0
     go xi ri di = xi: go xi1 ri1 di1
       where
-        ai  = (!!20) $ extremum (\a -> f $ zipTWith (+) (fmap lift xi) (fmap (a*) (fmap lift di))) 0
+        ai  = last $ take 20 $ extremum (\a -> f $ zipTWith (+) (fmap lift xi) (fmap (a*) (fmap lift di))) 0
         xi1 = zipTWith (+) xi (fmap (ai*) di)
         ri1 = fmap negate $ grad f xi1
         bi1 = max 0 $  innerProd ri1 (zipTWith (-) ri1 ri) / innerProd ri1 ri1
