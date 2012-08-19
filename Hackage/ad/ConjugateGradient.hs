@@ -33,10 +33,10 @@ gradientDescent f x0 = go x0 r0 d0
   where
     d0 = fmap negate $ grad f x0
     r0 = d0
-    go :: (Traversable f, Fractional a, Ord a) => f a ->  f a ->  f a ->  [f a]
-    go xi ri di = xi: go xi ri di
+    go xi ri di = xi: go xi ri di1
       where
-        ai = (!!10) $ findZero (\a -> f (fmap (a*) (sequenceA $ fmap lift di))) xi
+        di1 = fmap (ai*) di
+        ai = (!!10) $ findZero (\a -> f (fmap (a*) (fmap lift di))) (lift 0)
 {-# INLINE gradientDescent #-}
 
 
