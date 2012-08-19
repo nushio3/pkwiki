@@ -36,7 +36,7 @@ gradientDescent f x0 = go x0 r0 d0
     go xi ri di = xi: go xi ri di1
       where
         di1 = fmap (ai*) di
-        ai = (!!10) $ findZero (\a -> f (fmap (a*) (fmap lift di))) (lift 0)
+        ai = (!!10) $ findZero (\a -> f (fmap (a*) (fmap lift di))) undefined --(lift 0)
 {-# INLINE gradientDescent #-}
 
 
