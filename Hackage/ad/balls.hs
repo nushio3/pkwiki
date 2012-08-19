@@ -38,7 +38,7 @@ bindingEnergy (Molecule xs) = global + interaction
 main :: IO ()
 main = do
   forM_ [0..100000000::Int] $ \i -> do
-    when (mod i 1000 == 0) $ do
+    when (mod i 100 == 0) $ do
       print i
       let fn :: String
           fn = printf "mol-%08d.txt" i
