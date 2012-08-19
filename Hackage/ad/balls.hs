@@ -23,7 +23,7 @@ potential :: (Fractional a) => Pt a -> a
 potential = vanDerWaals . F.sum . fmap (^2)
 
 well :: (Fractional a) => Pt a -> a
-well = (1e-4 *) . F.sum . fmap (^2)
+well = (\r2 -> (r2-1)^2) . F.sum . fmap (^2)
 
 bindingEnergy :: (Fractional a) => Molecule a -> a
 bindingEnergy (Molecule xs) = global + interaction
@@ -38,7 +38,7 @@ bindingEnergy (Molecule xs) = global + interaction
 main :: IO ()
 main = do
   forM_ [0..100000000::Int] $ \i -> do
-    when (mod i 1000 == 0) $ do
+    when (mod i 100 == 0) $ do
       print i
       let fn :: String
           fn = printf "mol-%08d.txt" i
