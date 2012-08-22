@@ -35,7 +35,7 @@ A few calculation of derivatives at given points.
 > -- >>> diff (diff (diff (\x -> x^4))) 10
 > -- 240
 
-以下のように、$\frac{d}{dx}\sin x=\cos x$のような計算ができます。ちょっと荒いですが、テストもできます。(doctestのprop記法が早く実装されるといいですね。)
+以下のように、$\frac{d}{dx}\sin x=\cos x$のような計算ができます。ちょっと荒いですが、テストもできます。(doctestのprop記法が早く公開されるといいですね。)
 
 Here's a quick test for $\frac{d}{dx}\sin x=\cos x$ .
 
