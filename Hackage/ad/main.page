@@ -130,8 +130,6 @@ A more elegant solution is to wrap the Polynomial in the `newtype` and write a N
 
 Functions for printing.
 
-> x :: Poly Int
-> x = Poly $ MOP.fromCoeffs [0,1]
 > showP :: Poly Int -> String
 > showP = ($"") . MOP.showsExpressionPrec 0 "x" . runPoly
 
@@ -139,6 +137,9 @@ Functions for printing.
 
 Then we have relatively cool differentiations.
 
+> x :: Poly Int
+> x = Poly $ MOP.fromCoeffs [0,1]
+> 
 > -- | test 5. Differentiate MathObj.Polynomial
 > -- >>> putStr $ showP $ f x
 > -- 1 + 42*x + 1*x^3
