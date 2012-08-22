@@ -35,7 +35,7 @@ A few calculation of derivatives at given points.
 > -- >>> diff (diff (diff (\x -> x^4))) 10
 > -- 240
 
-ちょっと荒っぽいですが、以下のように$\frac{d}{dx}\sin x=\cos x$のような計算ができていることもテストできます。
+以下のように、$\frac{d}{dx}\sin x=\cos x$のような計算ができます。ちょっと荒いですが、テストもできます。(doctestのprop記法が早く実装されるといいですね。)
 
 Here's a quick test for $\frac{d}{dx}\sin x=\cos x$ .
 
@@ -50,7 +50,7 @@ Here's a quick test for $\frac{d}{dx}\sin x=\cos x$ .
 Differenting expression
 =======================
 
-自動微分の中身はどうなっているのでしょう。構文木を作るのはめどいので簡単なものをでっちあげます。
+自動微分の中身はどうなっているのでしょう。構文木になっている数式を自動微分に食わせることで、中で何が起こったかを探り出すことができるのではないでしょうか。本格的な構文木を作るのはめどいので簡単なものをでっちあげます。
 
 Let's investigate the inside of automated differentiation by passing it a mock syntax tree.
 
@@ -84,7 +84,7 @@ Differentiating Polynominals
 ============================
 
 初めから多項式しか登場しないと分かっているなら、多項式の係数のみを管理することで効率化がはかれます。
-[hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)ではPreludeの`Num`と一緒には動かないため、そのままでは自動微分に食わせられません。またしてもアドホックに作ってしまいましょう。
+[hackage:numeric-prelude]()に実装があるのですが、現時点(ver 0.3.0.2)ではPreludeの`Num`と一緒には動かないため、そのままでは自動微分に食わせられません。またしてもアドホックに、多項式の表現を作ってしまいましょう。
 
 It'd be easy to perform such optimization of terms if we deal with only polynomials. Actually, there's an implementation of polynomial in [hackage:numeric-prelude]() but it doesn't work with Prelude's `Num` class (at version 0.3.0.2), so we can't feed them to AD as they are. One solution is to create our own polynomial:
 
@@ -137,7 +137,7 @@ Functions for printing.
 
 これでかっこよく微分ができるようになりました。
 
-Cool differentiations.
+Then we have relatively cool differentiations.
 
 > -- | test 5. Differentiate MathObj.Polynomial
 > -- >>> putStr $ showP $ f x
