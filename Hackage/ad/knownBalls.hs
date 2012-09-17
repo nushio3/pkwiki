@@ -1,12 +1,15 @@
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, StandaloneDeriving #-}
 import Numeric.AD
-import ConjugateGradient (gradientDescent)
+import Numeric.AD.Newton (gradientDescent)
+--import ConjugateGradient (gradientDescent)
 import Data.Tensor.TypeLevel
 import Data.List (intercalate)
 import Control.Monad
 import qualified Data.Foldable as F
 import Data.Traversable (Traversable(..))
 import Text.Printf
+
+import Data.Time.Clock.POSIX (getPOSIXTime)
 
 type Pt = Vec3
 
@@ -15,6 +18,9 @@ newtype Molecule a = Molecule {runMolecule :: [Pt a]} deriving (Eq,Show)
 deriving instance Functor Molecule
 deriving instance F.Foldable Molecule
 deriving instance Traversable Molecule
+
+getTime :: IO Double
+getTime = fmap realToFrac getPOSIXTime
 
 spring :: (Fractional a) => a -> Pt a -> Pt a -> a
 spring length x y = (^2) $ (length^2-) $ F.sum $ fmap (^2) $ x-y
@@ -40,10 +46,12 @@ bindingEnergy (Molecule xs) = global + interaction
 
 main :: IO ()
 main = do
-  forM_ [0..100000000::Int] $ \i -> do
-    putStrLn $ unwords [show i,show $ bindingEnergy (ret!!i)]
-    when (mod i 100 == 0) $ do
-      print i
+  startTime <- getTime
+  forM_ [0..200000::Int] $ \i -> do
+    currentTime <- getTime
+    putStrLn $ unwords [show i,show $ currentTime-startTime,
+                        show $ bindingEnergy (ret!!i)]
+    when (mod i 100 == 0 && False) $ do
       let fn :: String
           fn = printf "mol-%08d.txt" i
           ptShow = intercalate " " . map show .  F.toList
@@ -53,5 +61,5 @@ main = do
 
   where
     initMolecule :: Molecule Double
-    initMolecule = Molecule [vec3 (2*x) (sqrt $ x+1) (sqrt $ x+2) | x <- [0..12]]
+    initMolecule = Molecule [vec3 (2*x) (sqrt $ x+1) (sqrt $ x+2) | x <- [0..121]]
     ret = gradientDescent bindingEnergy initMolecule
