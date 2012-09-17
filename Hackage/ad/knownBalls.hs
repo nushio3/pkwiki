@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, StandaloneDeriving #-}
 import Numeric.AD
-import ConjugateGradient (gradientDescent)
+import Numeric.AD.Newton (gradientDescent)
+-- import ConjugateGradient (gradientDescent)
 import Data.Tensor.TypeLevel
 import Data.List (intercalate)
 import Control.Monad
@@ -41,8 +42,8 @@ bindingEnergy (Molecule xs) = global + interaction
 main :: IO ()
 main = do
   forM_ [0..100000000::Int] $ \i -> do
-    putStrLn $ unwords [show i,show $ bindingEnergy (ret!!i)]
-    when (mod i 100 == 0) $ do
+    putStrLn $ unwords [show i, show $ bindingEnergy (ret!!i)]
+    when (mod i 100 == 0 && False) $ do
       print i
       let fn :: String
           fn = printf "mol-%08d.txt" i
@@ -53,5 +54,5 @@ main = do
 
   where
     initMolecule :: Molecule Double
-    initMolecule = Molecule [vec3 (2*x) (sqrt $ x+1) (sqrt $ x+2) | x <- [0..12]]
+    initMolecule = Molecule [vec3 (2*x) (sqrt $ x+1) (sqrt $ x+2) | x <- [0..26]]
     ret = gradientDescent bindingEnergy initMolecule
