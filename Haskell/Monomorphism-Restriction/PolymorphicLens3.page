@@ -16,7 +16,7 @@ Now, let's try writing a lens for the `Speaker` type.
 >   { _speak :: Speech}
 >
 
-Let us study where the error comes from. Even the following code does not work;
+Let us study where the error comes from. Even the following code does not typecheck;
 
 > -- speak :: Lens Speaker Speech
 > -- speak = lens (undefined :: Speaker -> Speech) 
