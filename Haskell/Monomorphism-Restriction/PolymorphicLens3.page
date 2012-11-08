@@ -3,11 +3,11 @@ format: markdown+lhs
 title: How to Write a Lens for Data with Polymorphic Members?
 ...
 
-- This document results in a error.
+- This document results in a error, too.
 
 Now, let's try writing a lens for the `Speaker` type.
 
-> {-# LANGUAGE ImpredicativeTypes, RankNTypes, TemplateHaskell #-}
+> {-# LANGUAGE ImpredicativeTypes, NoMonomorphismRestriction, RankNTypes, ScopedTypeVariables, TemplateHaskell #-}
 > {-# OPTIONS -Wall #-}
 > import Data.Lens.Strict
 >
@@ -16,12 +16,28 @@ Now, let's try writing a lens for the `Speaker` type.
 >   { _speak :: Speech}
 >
 
-The following code is the same as what 
-`$(makeLenses [''Speaker])` would have generated, from
- `Data.Lens.Template`.  
+Let us study where the error comes from. Even the following code does not work;
 
-> speak :: Lens Speaker Speech
-> speak = lens (undefined :: Speaker -> Speech) (undefined :: Speech -> Speaker -> Speaker)
+> -- speak :: Lens Speaker Speech
+> -- speak = lens (undefined :: Speaker -> Speech) 
+> --              (undefined :: Speech -> Speaker -> Speaker)
 
+Althought it seems to perfectly match the definition of `lens`
+``
+lens :: (a -> b) -> (b -> a -> a) -> Lens a b
+``
+
+The two are different. In the definition `lens` is a rank-1
+polymorphic function. On the other hand, to write the lens for
+`Speaker`, we need `a` in the `lens` to be of type `Speech`, so `lens`
+needs to be a rank-2 polymorphic function. Therefore, we cannot write
+the lens `speak` using `lens`, however hard we type annotate.
+
+> speak :: forall a. Show a => Lens Speaker (a -> String)
+> speak = lens (_speak :: Speaker -> (a -> String)) 
+>              ((\f s -> (Speaker::(a -> String) -> Speaker) f))
+
+> main :: IO ()
+> main = return ()
 
 
