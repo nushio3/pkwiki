@@ -22,7 +22,8 @@ Let us study where the error comes from. Even the following code does not work;
 > -- speak = lens (undefined :: Speaker -> Speech) 
 > --              (undefined :: Speech -> Speaker -> Speaker)
 
-Althought it seems to perfectly match the definition of `lens`
+Althought it seems to perfectly match the definition of `lens`:
+
 ``
 lens :: (a -> b) -> (b -> a -> a) -> Lens a b
 ``
