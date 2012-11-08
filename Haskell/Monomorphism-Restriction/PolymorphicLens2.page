@@ -3,28 +3,24 @@ format: markdown+lhs
 title: How to Write a Lens for Data with Polymorphic Members?
 ...
 
-- You can test this document with doctest.
+- This document results in a error.
 
+Now, let's try writing a lens for the `Speaker` type.
 
 > {-# LANGUAGE ImpredicativeTypes, RankNTypes, TemplateHaskell #-}
 > {-# OPTIONS -Wall #-}
-
 > import Data.Lens.Strict
-> import Data.Lens.Template ( makeLenses )
-
-
+>
 > data Speaker = Speaker
 >   { _speak :: Show a => a -> String }
+>
 
-> geisha :: Speaker
-> geisha = Speaker { _speak = (++ " dosu.") . show }
+I could have imported `Data.Lens.Template` and use
+`$(makeLenses [''Speaker])`
+let the 
 
-> -- | Test of speak
-> --
-> -- >>> speak geisha 130
-> -- "130 dosu."
-
-> $(makeLenses [''Speaker])
+> speak :: Lens Speaker (Show a => a -> String)
+> speak = lens _speak (\f s -> s{_speak = f})
 
 > main :: IO ()
 > main = return ()

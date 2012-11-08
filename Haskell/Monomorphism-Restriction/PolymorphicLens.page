@@ -21,7 +21,7 @@ And a geisha. You sound like a geisha if you speak with suffix "dosu."
 
 > geisha :: Speaker
 > geisha = Speaker { speak = (++ " dosu.") . show }
-
+>
 > -- | Test of speak
 > --
 > -- >>> speak geisha 130
