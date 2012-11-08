@@ -11,7 +11,7 @@ Now, let's try writing a lens for the `Speaker` type.
 > {-# OPTIONS -Wall #-}
 > import Data.Lens.Strict
 >
-> Type Speech = Show a => a -> String 
+> type Speech = (Show a) => a -> String 
 > data Speaker = Speaker
 >   { _speak :: Speech}
 >
@@ -26,12 +26,16 @@ The following code is the same as what
 Unfortunately, this results in the following error.
 
 ```
-PolymorphicLens2.lhs:23:16:
-    Couldn't match expected type `forall a. Show a => a -> String'
+PolymorphicLens2.lhs:25:16:
+    Couldn't match expected type `Speech'
                 with actual type `a0 -> String'
-    Expected type: Speaker -> forall a. Show a => a -> String
+    Expected type: Speaker -> Speech
       Actual type: Speaker -> a0 -> String
     In the first argument of `lens', namely `_speak'
     In the expression: lens _speak (\ f s -> s {_speak = f})
 ```
 
+Why `_speak` is not of type `Speaker -> Speech`? This is because
+`_speak` used as an expression needs to be of a certain monomorphic
+type `Speaker -> a0 -> String` . But Haskell couldn't determine which 
+type `a0` should be. 

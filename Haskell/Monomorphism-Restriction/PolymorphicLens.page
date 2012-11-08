@@ -14,8 +14,9 @@ a polymorphic data type. Let me shrink the [original sample code](http://comment
 
 Here is the polymorphic data type:
 
+> type Speech = (Show a) => a -> String
 > data Speaker = Speaker
->   { speak :: Show a => a -> String }
+>   { speak :: Speech }
 
 And a geisha. You sound like a geisha if you speak with suffix "dosu."
 

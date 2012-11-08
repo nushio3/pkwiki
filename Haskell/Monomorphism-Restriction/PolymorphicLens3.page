@@ -1,0 +1,27 @@
+---
+format: markdown+lhs
+title: How to Write a Lens for Data with Polymorphic Members?
+...
+
+- This document results in a error.
+
+Now, let's try writing a lens for the `Speaker` type.
+
+> {-# LANGUAGE ImpredicativeTypes, RankNTypes, TemplateHaskell #-}
+> {-# OPTIONS -Wall #-}
+> import Data.Lens.Strict
+>
+> type Speech = (Show a) => a -> String 
+> data Speaker = Speaker
+>   { _speak :: Speech}
+>
+
+The following code is the same as what 
+`$(makeLenses [''Speaker])` would have generated, from
+ `Data.Lens.Template`.  
+
+> speak :: Lens Speaker Speech
+> speak = lens (undefined :: Speaker -> Speech) (undefined :: Speech -> Speaker -> Speaker)
+
+
+
