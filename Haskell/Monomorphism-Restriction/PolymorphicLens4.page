@@ -19,7 +19,7 @@ Now, how do we write a lens for the `Speaker` type?
 >   { _speak :: Speech}
 > $(makeLenses [''Speaker])
 
-We can use the * nominal typing, * to make our code typecheck with
+We can use the *nominal typing*,  to make our code typecheck with
 little modification. Declare `Speech` as a new type instead of making
 it a type synonim. Because the type `Speech` is now monomorphic, we
 can write `lens` for `Speaker`. We can even leave our task to
