@@ -1,35 +1,41 @@
 ---
 format: markdown+lhs
-title: How to Write a Lens for a Data Type with Polymorphic Records?
+title: How to Write a Lens for Data with Polymorphic Members?
 ...
 
-- You can test this document with doctest.
+- This document should doctest.
 
-I leaned about Haskell's polymorphism when I tried to write a lens for
-a polymorphic data type. Let me shrink the [original sample code](http://comments.gmane.org/gmane.comp.lang.haskell.cafe/101316) to a minimal one.
+Now, let's try writing a lens for the `Speaker` type.
 
-> {-# LANGUAGE RankNTypes #-}
-> {-# OPTIONS -Wall #-}
-> module Main where
-
-Here is the polymorphic data type:
-
-> type Speech = (Show a) => a -> String
+> {-# LANGUAGE ImpredicativeTypes, RankNTypes, TemplateHaskell #-}
+> {-# OPTIONS -Wall -fno-warn-unused-do-bind #-}
+> import Control.Monad.Trans.State.Strict
+> import Control.Monad.IO.Class
+> import Data.Lens.Strict
+> import Data.Lens.Template (makeLenses)
+>
+> newtype Speech = Speech (Show a => a -> String)
 > data Speaker = Speaker
->   { speak :: Speech }
+>   { _speak :: Speech}
+> $(makeLenses [''Speaker])
 
-And a geisha. You sound like a geisha if you speak with suffix "dosu."
+
 
 > geisha :: Speaker
-> geisha = Speaker { speak = (++ " dosu.") . show }
->
-> -- | Test of speak
+> geisha = Speaker $ Speech ((++" dosu.") . show)
+
+> -- | The output of the main program should be as follows.
 > --
-> -- >>> speak geisha 130
-> -- "130 dosu."
+> -- >>> main
+> -- 130 dosu.
+> -- 390 de gozaru.
 >
 > main :: IO ()
-> main = return ()
-
-Now, when I try to create a lens for `Speaker` I ran into [a
-problem](PolymorphicLens2).
+> main = flip evalStateT geisha $ do
+>   putSpeak (130 :: Int)
+>   speak ~= Speech ((++" de gozaru.") . show)
+>   putSpeak (390 :: Int)
+>     where
+>       putSpeak x = do
+>         Speech f <- access speak
+>         liftIO $ putStrLn $ f x
