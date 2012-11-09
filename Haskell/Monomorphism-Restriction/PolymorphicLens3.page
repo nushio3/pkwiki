@@ -7,19 +7,21 @@ title: How to Write a Lens for Data with Polymorphic Members?
 
 Now, let's try writing a lens for the `Speaker` type.
 
-> {-# LANGUAGE ImpredicativeTypes, NoMonomorphismRestriction, RankNTypes, ScopedTypeVariables, TemplateHaskell #-}
+> {-# LANGUAGE ImpredicativeTypes, NoMonomorphismRestriction,
+      RankNTypes, ScopedTypeVariables, TemplateHaskell #-}
 > {-# OPTIONS -Wall #-}
 > import Data.Lens.Strict
 >
-> type Speech = (Show a) => a -> String 
+> type Speech = (Show a) => a -> String
 > data Speaker = Speaker
 >   { _speak :: Speech}
 >
 
-Let us study where the error comes from. Even the following code does not typecheck;
+Let us study where the error comes from. Even the following code does
+not typecheck;
 
 > -- speak :: Lens Speaker Speech
-> -- speak = lens (undefined :: Speaker -> Speech) 
+> -- speak = lens (undefined :: Speaker -> Speech)
 > --              (undefined :: Speech -> Speaker -> Speaker)
 
 Althought it seems to perfectly match the definition of `lens`:
@@ -30,15 +32,24 @@ lens :: (a -> b) -> (b -> a -> a) -> Lens a b
 
 The two are different. In the definition `lens` is a rank-1
 polymorphic function. On the other hand, to write the lens for
-`Speaker`, we need `a` in the `lens` to be of type `Speech`, so `lens`
-needs to be a rank-2 polymorphic function. Therefore, we cannot write
-the lens `speak` using `lens`, however hard we type annotate.
+`Speaker`, we need `a` in the `lens` to be of a polymorphic type
+`Speech`, so `lens` needs to be a rank-2 polymorphic function.
+
+``
+-- as defined in Data.Lens.Common
+lens :: forall a b. (a -> b) -> (b -> a -> a) -> Lens a b
+-- as used in the above code (with abbreviation)
+lens :: (forall b. a -> b) -> (forall b. b -> a -> a) -> Lens a b
+``
+
+Therefore, we cannot write the lens `speak` using `lens`, however hard
+we type annotate.
 
 > speak :: forall a. Show a => Lens Speaker (a -> String)
-> speak = lens (_speak :: Speaker -> (a -> String)) 
+> speak = lens (_speak :: Speaker -> (a -> String))
 >              ((\f s -> (Speaker::(a -> String) -> Speaker) f))
 
 > main :: IO ()
 > main = return ()
 
-
+Is there any [solution](PolymorphicLens4) to this problem?
