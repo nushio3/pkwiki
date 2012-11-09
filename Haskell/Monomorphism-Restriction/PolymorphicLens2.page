@@ -35,7 +35,9 @@ PolymorphicLens2.lhs:25:16:
     In the expression: lens _speak (\ f s -> s {_speak = f})
 ```
 
-Why `_speak` is not of type `Speaker -> Speech`? This is because
+Why not `_speak` is of type `Speaker -> Speech`? This is because
 `_speak` used as an expression needs to be of a certain monomorphic
 type `Speaker -> a0 -> String` . But Haskell couldn't determine which 
 type `a0` should be. 
+
+In [the next section](PolymorphicLens3) we focus on the behavior of Haskell type system that caused the error.
