@@ -8,7 +8,7 @@ title: How to Write a Lens for Data with Polymorphic Members?
 Now, let's try writing a lens for the `Speaker` type.
 
 > {-# LANGUAGE ImpredicativeTypes, NoMonomorphismRestriction,
->     RankNTypes, ScopedTypeVariables, TemplateHaskell #-}
+>     RankNTypes, TemplateHaskell #-}
 > {-# OPTIONS -Wall #-}
 > import Control.Comonad.Trans.Store
 > import Data.Functor.Identity
@@ -51,7 +51,9 @@ we type annotate.
 > speak = Lens $ f
 >   where
 >     f :: Speaker -> StoreT (forall a. (Show a)=> a -> String) Identity Speaker
->     f a1 = StoreT (Identity (\b1 -> a1{_speak = b1})) (undefined a1)
+>     f a1 = let g :: Speaker -> (forall a. (Show a)=> a -> String)
+>                g (Speaker h) = h
+>            in  StoreT (Identity (\b1 -> a1{_speak = b1})) ((g:: Speaker -> (forall a. (Show a)=> a -> String)) a1)
 >
 > main :: IO ()
 > main = return ()
