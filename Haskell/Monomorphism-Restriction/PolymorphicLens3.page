@@ -11,8 +11,11 @@ Now, let's try writing a lens for the `Speaker` type.
 >     RankNTypes, TemplateHaskell #-}
 > {-# OPTIONS -Wall #-}
 > import Control.Comonad.Trans.Store
+> import Control.Monad.Trans.State.Strict
+> import Control.Monad.IO.Class
 > import Data.Functor.Identity
 > import Data.Lens.Strict
+> import Unsafe.Coerce
 >
 > type Speech = (Show a) => a -> String
 > data Speaker = Speaker
@@ -45,17 +48,38 @@ lens :: (forall b. a -> b) -> (forall b. b -> a -> a) -> Lens a b
 ``
 
 Therefore, we cannot write the lens `speak` using `lens`, however hard
-we type annotate.
+we type annotate. The following code typechecks, but you can easily point out
+a cheat used here.
 
 > speak :: Lens Speaker Speech
-> speak = Lens $ f
+> speak = lens' _speak (\f s -> s{_speak = f})
 >   where
->     f :: Speaker -> StoreT (forall a. (Show a)=> a -> String) Identity Speaker
->     f a1 = let g :: Speaker -> (forall a. (Show a)=> a -> String)
->                g (Speaker h) = h
->            in  StoreT (Identity (\b1 -> a1{_speak = b1})) ((g:: Speaker -> (forall a. (Show a)=> a -> String)) a1)
+>     lens' :: (Speaker->Speech) -> (Speech->Speaker->Speaker) -> Lens Speaker Speech
+>     lens' get1 set1 =
+>       Lens $ (\a1 -> StoreT (Identity (\b1 -> set1 b1 a1))
+>               ((unsafeCoerce (get1::Speaker->(Int->String))) a1)
+>               :: StoreT Speech Identity Speaker)
+
+
+Moreover, even if we could make up a lens, its use is tedious (the following code doesn't typecheck, and the author gave up fixing it.)
+
+> geisha :: Speaker
+> geisha = Speaker $ ((++" dosu.") . show)
+>
+> -- | The output of the main program should be as follows.
+> --
+> -- >>> main
+> -- 130 dosu.
+> -- 390 de gozaru.
 >
 > main :: IO ()
-> main = return ()
+> main = flip evalStateT geisha $ do
+>   putSpeak (130 :: Int)
+>   speak ~= ((++" de gozaru.") . show :: Speech)
+>   putSpeak (390 :: Int)
+>     where
+>       putSpeak x = do
+>         f <- access speak
+>         liftIO $ putStrLn $ f x
 
 Is there any [solution](PolymorphicLens4) to this problem?

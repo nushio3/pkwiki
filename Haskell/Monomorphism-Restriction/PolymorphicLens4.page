@@ -7,7 +7,7 @@ title: How to Write a Lens for Data with Polymorphic Members?
 
 Now, how do we write a lens for the `Speaker` type?
 
-> {-# LANGUAGE ImpredicativeTypes, RankNTypes, TemplateHaskell #-}
+> {-# LANGUAGE  RankNTypes, TemplateHaskell #-}
 > {-# OPTIONS -Wall -fno-warn-unused-do-bind #-}
 > import Control.Monad.Trans.State.Strict
 > import Control.Monad.IO.Class
