@@ -75,7 +75,9 @@ Moreover, even if we could make up a lens, its use is tedious (the following cod
 > main :: IO ()
 > main = flip evalStateT geisha $ do
 >   putSpeak (130 :: Int)
->   speak ~= ((++" de gozaru.") . show :: Speech)
+>   let ninjaSpeak :: Speech
+>       ninjaSpeak = (++" de gozaru.") . show
+>   speak ~= ninjaSpeak
 >   putSpeak (390 :: Int)
 >     where
 >       putSpeak x = do
