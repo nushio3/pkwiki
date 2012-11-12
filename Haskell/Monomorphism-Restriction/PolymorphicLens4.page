@@ -3,9 +3,9 @@ format: markdown+lhs
 title: How to Write a Lens for Data with Polymorphic Members?
 ...
 
-- This document should pass the doctest.
+This document should pass the doctest.
 
-- これでdoctest通るはず.
+これでdoctest通るはず.
 
 
 Now, how do we write a lens for the `Speaker` type?
